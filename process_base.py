@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os, traceback
 from .plugin import P
 ModelSetting = P.ModelSetting
 
@@ -101,12 +102,12 @@ class ProcessBase(object):
                 return True
             if mode == 'force':
                 return True
-            frequency = item['frequency'] if 'freqeuncy' in item else ModelSetting.get_int('default_freqeuncy')
+            frequency = item['frequency'] if 'frequency' in item else ModelSetting.get_int('default_frequency')
             if mode == 'scheduler':
                 if frequency == 0:
                     return False
                 else:
-                    return ((P.scheduler_count % freqeuncy) == 0)
+                    return ((P.scheduler_count % frequency) == 0)
         except Exception as e:
             P.logger.error('Exception:%s', e)
             P.logger.error(traceback.format_exc())

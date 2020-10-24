@@ -158,7 +158,7 @@ class LogicXC(LogicModuleBase):
         'use_auth' : 'False',
         'user' : 'user',
         'pass' : 'pass',
-        'default_freqeuncy' : '1',
+        'default_frequency' : '1',
         'default_max_count' : '20',
 
         'plex_use' : 'False',
@@ -189,7 +189,7 @@ class LogicXC(LogicModuleBase):
     }
 
     def __init__(self, P):
-        super(LogicXC, self).__init__(P, 'base')
+        super(LogicXC, self).__init__(P, 'base', scheduler_desc=u'tivimate 항목 생성')
         self.name = 'xc'
 
     def process_menu(self, sub, req):

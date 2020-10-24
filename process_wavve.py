@@ -47,6 +47,7 @@ class ProcessWavve(ProcessBase):
         cls.live_channel_list = OrderedDict()
         
         for item in cls.make_json(ModelSetting.get('wavve_live')):
+            logger.debug('WAVVE live %s', item['title'])
             if ModelSetting.get_bool('wavve_is_adult') == False and 'is_adult' in item and item['is_adult']:
                 continue
             try:
@@ -81,7 +82,7 @@ class ProcessWavve(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
-
+        logger.debug('WAVVE live count : %s', len(cls.live_list))
 
     @classmethod
     def make_vod_data(cls, mode):
@@ -89,6 +90,7 @@ class ProcessWavve(ProcessBase):
         cls.vod_list = []
         
         for item in cls.make_json(ModelSetting.get('wavve_vod')):
+            logger.debug('WAVVE vod %s', item['title'])
             if cls.is_working_time(item, mode) == False:
                 continue
             if ModelSetting.get_bool('wavve_is_adult') == False and 'is_adult' in item and item['is_adult']:
@@ -100,7 +102,7 @@ class ProcessWavve(ProcessBase):
                 category_count = 0
                 while True:
                     vod_list = Wavve.movie_contents(page=page, genre=item['category'])
-                    logger.debug('Wavve vod genre : %s , page : %s', item['category'], page)
+                    #logger.debug('Wavve vod genre : %s , page : %s', item['category'], page)
                     if vod_list is None or len(vod_list['list']) == 0:
                         break
                     # 이건 다 중복
@@ -131,16 +133,17 @@ class ProcessWavve(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
-
+        logger.debug('WAVVE vod count : %s', len(cls.vod_list))
 
     @classmethod
     def make_series_data(cls, mode):
-        logger.debug('make_series_data')
+        #logger.debug('make_series_data')
         cls.series_categories = []
         cls.series_list = []
         timestamp = int(time.time())
         count = 0
         for item in cls.make_json(ModelSetting.get('wavve_series')):
+            logger.debug('WAVVE series %s', item['title'])
             if cls.is_working_time(item, mode) == False:
                 continue
             if ModelSetting.get_bool('wavve_is_adult') == False and 'is_adult' in item and item['is_adult']:
@@ -186,7 +189,7 @@ class ProcessWavve(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
-        logger.debug('wavve series info count : %s', len(cls.series_list))
+        logger.debug('WAVVE series count : %s', len(cls.series_list))
 
 
 
@@ -352,7 +355,7 @@ class ModelWavveMap(db.Model):
                         break
                 content_data = Wavve.vod_contents_contentid(contents['list'][index]['contentid'])
                 if content_data['drms'] != '':
-                    logger.debug(content_data['drms'])
+                    #logger.debug(content_data['drms'])
                     item.is_drm = True
         if save_flag:
             db.session.add(item)

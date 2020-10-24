@@ -66,6 +66,7 @@ class ProcessPlex(ProcessBase):
             content_list = []
             
             for item in rule[content_type]:
+                logger.debug('PLEX %s %s', content_type, item['title'])
                 if cls.is_working_time(item, mode) == False:
                     continue
                 #max_count = item['max_count'] if 'max_count' in item else ModelSetting.get_int('default_max_count')
@@ -85,7 +86,7 @@ class ProcessPlex(ProcessBase):
                         videos = doc.xpath("//directory")
 
                     for tag_video in videos:
-                        logger.debug('count : %s - %s', count, tag_video.attrib['title'].replace('  ', ' '))
+                        #logger.debug('count : %s - %s', count, tag_video.attrib['title'].replace('  ', ' '))
                         if tag_video.attrib['type'] in ['movie', 'episode']:
                             tmp = tag_video.xpath('.//media')
                             if tmp:

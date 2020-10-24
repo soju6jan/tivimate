@@ -20,7 +20,7 @@
       {{ macros.setting_global_scheduler_sub_button(arg['scheduler'], arg['is_running']) }}
       {{ macros.setting_input_text('xc_interval', '스케쥴링 실행 정보', value=arg['xc_interval'], col='3', desc=['Inverval(minute 단위)이나 Cron 설정']) }}
       {{ macros.setting_checkbox('xc_auto_start', '시작시 자동실행', value=arg['xc_auto_start'], desc='On : 시작시 자동으로 스케쥴러에 등록됩니다.') }}
-      {{ macros.setting_input_int('default_freqeuncy', '기본 실행빈도', value=arg['default_freqeuncy'], min='1', desc=['아이템에 freqeuncy 값이 없을 때 대입되는 값']) }}
+      {{ macros.setting_input_int('default_frequency', '기본 실행빈도', value=arg['default_frequency'], min='1', desc=['아이템에 frequency 값이 없을 때 대입되는 값']) }}
       {{ macros.setting_input_int('default_max_count', '기본 최대수', value=arg['default_max_count'], min='1', desc=['아이템에 max_count 값이 없을 때 대입되는 값']) }}
       {{ macros.m_hr() }}
       {{ macros.info_text('', '스케쥴링', value=arg['scheduler_count'], desc=['재시작 이후 스케쥴링 실행 횟수'] ) }}

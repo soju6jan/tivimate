@@ -95,7 +95,7 @@ class ProcessTving(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
-        logger.debug('Tving live len : %s', len(cls.live_list))
+        logger.debug('Tving live count : %s', len(cls.live_list))
         cls.make_channel_epg_data()
 
 
@@ -106,6 +106,7 @@ class ProcessTving(ProcessBase):
         cls.vod_list = []
         
         for item in cls.make_json(ModelSetting.get('tving_vod')):
+            logger.debug('TVING vod %s', item['title'])
             if cls.is_working_time(item, mode) == False:
                 continue
             if ModelSetting.get_bool('tving_is_adult') == False and 'is_adult' in item and item['is_adult']:
@@ -143,7 +144,7 @@ class ProcessTving(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
-
+        logger.debug('TVING vod count : %s', len(cls.vod_list))
 
     @classmethod
     def make_series_data(cls, mode):
@@ -152,6 +153,7 @@ class ProcessTving(ProcessBase):
         timestamp = int(time.time())
         count = 0
         for item in cls.make_json(ModelSetting.get('tving_series')):
+            logger.debug('TVING series %s', item['title'])
             if cls.is_working_time(item, mode) == False:
                 continue
             if ModelSetting.get_bool('tving_is_adult') == False and 'is_adult' in item and item['is_adult']:
@@ -194,7 +196,7 @@ class ProcessTving(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
-
+        logger.debug('TVING series count : %s', len(cls.series_list))
 
     @classmethod 
     def get_vod_info(cls, vod_id):
