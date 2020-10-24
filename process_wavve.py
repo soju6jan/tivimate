@@ -27,13 +27,14 @@ import framework.wavve.api as Wavve
 
 class ProcessWavve(ProcessBase):
     unique = '1'
-
+    saved = {'vod':{}, 'series':{}}
     @classmethod 
     def scheduler_function(cls, mode='scheduler'):
         try:
             if ModelSetting.get_bool('wavve_use') == False:
                 return
-            cls.make_live_data(mode)
+            if mode == 'force' or cls.live_list is None:
+                cls.make_live_data(mode)
             cls.make_vod_data(mode)
             cls.make_series_data(mode)
         except Exception as e:
@@ -82,6 +83,7 @@ class ProcessWavve(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
+            
         logger.debug('WAVVE live count : %s', len(cls.live_list))
 
     @classmethod
@@ -91,13 +93,16 @@ class ProcessWavve(ProcessBase):
         
         for item in cls.make_json(ModelSetting.get('wavve_vod')):
             logger.debug('WAVVE vod %s', item['title'])
-            if cls.is_working_time(item, mode) == False:
-                continue
             if ModelSetting.get_bool('wavve_is_adult') == False and 'is_adult' in item and item['is_adult']:
                 continue
             try:
                 category_id =  str(item['id']) + ProcessWavve.unique
                 cls.vod_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
+                if cls.is_working_time(item, mode) == False:
+                    logger.debug('work no')
+                    continue
+                else:
+                    cls.saved['vod'][category_id] = []
                 page = 1
                 category_count = 0
                 while True:
@@ -125,7 +130,8 @@ class ProcessWavve(ProcessBase):
                             'category_id' : category_id,
                             'is_adult' : '0',
                         }
-                        cls.vod_list.append(entity)
+                        #cls.vod_list.append(entity)
+                        cls.saved['vod'][category_id].append(entity)
                         category_count += 1
                     page += 1
                     if category_count >= item['max_count']:
@@ -133,6 +139,9 @@ class ProcessWavve(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
+            finally:
+                logger.debug('append : %s', len(cls.saved['vod'][category_id]))
+                cls.vod_list += cls.saved['vod'][category_id]
         logger.debug('WAVVE vod count : %s', len(cls.vod_list))
 
     @classmethod
@@ -144,13 +153,16 @@ class ProcessWavve(ProcessBase):
         count = 0
         for item in cls.make_json(ModelSetting.get('wavve_series')):
             logger.debug('WAVVE series %s', item['title'])
-            if cls.is_working_time(item, mode) == False:
-                continue
             if ModelSetting.get_bool('wavve_is_adult') == False and 'is_adult' in item and item['is_adult']:
                 continue
             category_id =  str(item['id']) + ProcessWavve.unique
             cls.series_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
             try:
+                if cls.is_working_time(item, mode) == False:
+                    logger.debug('work no')
+                    continue
+                else:
+                    cls.saved['series'][category_id] = []
                 page = 1
                 category_count = 0
                 while True:   
@@ -180,7 +192,8 @@ class ProcessWavve(ProcessBase):
                         if db_item.program_data is not None:
                             entity['cover'] = 'https://' + db_item.program_data['posterimage']
                         # 여기서 이외정보는 넣어도 안씀.
-                        cls.series_list.append(entity)
+                        #cls.series_list.append(entity)
+                        cls.saved['series'][category_id].append(entity)
                         count += 1
                         category_count += 1
                     page += 1
@@ -189,6 +202,9 @@ class ProcessWavve(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
+            finally:
+                logger.debug('append : %s', len(cls.saved['series'][category_id]))
+                cls.vod_list += cls.saved['vod'][category_id]
         logger.debug('WAVVE series count : %s', len(cls.series_list))
 
 
@@ -407,9 +423,9 @@ wavve_default_vod = u'''
 
 wavve_default_series = u'''
 [웨이브 최근]\ncategory = all\nmax_count = 100\nfrequency = 1
-[웨이브 드라마]\ncategory = 01\nmax_count = 100\nfrequency = 1
-[웨이브 예능]\ncategory = 02\nmax_count = 100\nfrequency = 1
-[웨이브 시사교양]\ncategory = 03\nmax_count = 100\nfrequency = 1
+[웨이브 드라마]\ncategory = 01\nmax_count = 100\nfrequency = 3
+[웨이브 예능]\ncategory = 02\nmax_count = 100\nfrequency = 3
+[웨이브 시사교양]\ncategory = 03\nmax_count = 100\nfrequency = 3
 [웨이브 키즈]\ncategory = 06\nmax_count = 100\nfrequency = 6
 [웨이브 스포츠]\ncategory = 05\nmax_count = 100\nfrequency = 6
 [웨이브 애니메이션]\ncategory = 08\nmax_count = 100\nfrequency = 6

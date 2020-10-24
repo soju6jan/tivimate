@@ -46,13 +46,14 @@ def tving_live():
 
 class ProcessTving(ProcessBase):
     unique = '2'
-
+    saved = {'vod':{}, 'series':{}}
     @classmethod 
     def scheduler_function(cls, mode='scheduler'):
         try:
             if ModelSetting.get_bool('tving_use') == False:
                 return
-            cls.make_live_data(mode)
+            if mode == 'force' or cls.live_list is None:
+                cls.make_live_data(mode)
             #cls.make_vod_data(mode)
             cls.make_series_data(mode)
         except Exception as e:
@@ -107,13 +108,16 @@ class ProcessTving(ProcessBase):
         
         for item in cls.make_json(ModelSetting.get('tving_vod')):
             logger.debug('TVING vod %s', item['title'])
-            if cls.is_working_time(item, mode) == False:
-                continue
             if ModelSetting.get_bool('tving_is_adult') == False and 'is_adult' in item and item['is_adult']:
                 continue
             try:
                 category_id =  str(item['id']) + ProcessTving.unique
                 cls.vod_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
+                if cls.is_working_time(item, mode) == False:
+                    logger.debug('work no')
+                    continue
+                else:
+                    cls.saved['vod'][category_id] = []
                 page = 1
                 category_count = 0
                 while True:
@@ -135,7 +139,7 @@ class ProcessTving(ProcessBase):
                             'category_id' : category_id,
                             'is_adult' : '0',
                         }
-                        cls.vod_list.append(entity)
+                        cls.saved['vod'][category_id].append(entity)
                         category_count += 1
 
                     page += 1
@@ -144,6 +148,9 @@ class ProcessTving(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
+            finally:
+                logger.debug('append : %s', len(cls.saved['vod'][category_id]))
+                cls.vod_list += cls.saved['vod'][category_id]
         logger.debug('TVING vod count : %s', len(cls.vod_list))
 
     @classmethod
@@ -154,13 +161,16 @@ class ProcessTving(ProcessBase):
         count = 0
         for item in cls.make_json(ModelSetting.get('tving_series')):
             logger.debug('TVING series %s', item['title'])
-            if cls.is_working_time(item, mode) == False:
-                continue
             if ModelSetting.get_bool('tving_is_adult') == False and 'is_adult' in item and item['is_adult']:
                 continue
             category_id =  str(item['id']) + ProcessTving.unique
             cls.series_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
             try:
+                if cls.is_working_time(item, mode) == False:
+                    logger.debug('work no')
+                    continue
+                else:
+                    cls.saved['series'][category_id] = []
                 page = 1
                 category_count = 0
                 while True:   
@@ -187,7 +197,7 @@ class ProcessTving(ProcessBase):
                             'category_id' : category_id,
                             'last_modified' : timestamp - count
                         }
-                        cls.series_list.append(entity)
+                        cls.saved['series'][category_id].append(entity)
                         count += 1
                         category_count += 1
                     page += 1
@@ -196,6 +206,9 @@ class ProcessTving(ProcessBase):
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
+            finally:
+                logger.debug('append : %s', len(cls.saved['series'][category_id]))
+                cls.series_list += cls.saved['series'][category_id]
         logger.debug('TVING series count : %s', len(cls.series_list))
 
     @classmethod 

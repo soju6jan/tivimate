@@ -51,7 +51,7 @@ frequency = 1
 
 class ProcessPlex(ProcessBase):
     unique = '0'
-
+    saved = {'vod':{}, 'series':{}}
     @classmethod 
     def scheduler_function(cls, mode='scheduler'):
         #logger.debug(ModelSetting.get('plex_vod'))
@@ -74,6 +74,11 @@ class ProcessPlex(ProcessBase):
                 try:
                     category_id =  str(item['id']) + ProcessPlex.unique
                     content_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
+                    if cls.is_working_time(item, mode) == False:
+                        logger.debug('work no')
+                        continue
+                    else:
+                        cls.saved[content_type][category_id] = []
                     plex_content = '1' if content_type == 'vod' else '2'
                     if item['section'] == 'recent':
                         url = '{}/hubs/home/recentlyAdded?type={}&X-Plex-Token={}'.format(ModelSetting.get('plex_server'), plex_content, ModelSetting.get('plex_token'))
@@ -157,13 +162,17 @@ class ProcessPlex(ProcessBase):
                         else:
                             #tag_video.attrib['type'] == 'clip':
                             continue
-                        content_list.append(entity)
+                        #content_list.append(entity)
+                        cls.saved[content_type][category_id].append(entity)
                         count += 1
                         if count >= item['max_count']:
                             break 
                 except Exception as e:
                     logger.error('Exception:%s', e)
                     logger.error(traceback.format_exc())
+                finally:
+                    logger.debug('append : %s', len(cls.saved[content_type][category_id]))
+                    content_list += cls.saved[content_type][category_id]
             if content_type == 'vod':
                 cls.vod_categories = content_categories
                 cls.vod_list = content_list
