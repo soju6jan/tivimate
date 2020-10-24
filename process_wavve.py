@@ -151,7 +151,7 @@ class ProcessWavve(ProcessBase):
                 page = 1
                 category_count = 0
                 while True:   
-                    if 'subgenre' not in item:
+                    if 'sub_category' not in item:
                         episode_list = Wavve.vod_contents(page=page, genre=item['category'])
                     else:
                         episode_list = Wavve.vod_allprograms(page=page, genre=item['category'], subgenre=item['sub_category'])

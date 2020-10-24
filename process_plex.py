@@ -27,26 +27,22 @@ ModelSetting = P.ModelSetting
 
 plex_default_vod = u'''
 [PLEX 최신]
-title = PLEX 최신
 section = recent
 max_count = 100
 frequency = 6
 
 #[PLEX 영화]
-#title = PLEX 영화
 #section = 22
 #frequency = 30
 '''
 
 plex_default_series = u'''
 [PLEX 최신]
-title = PLEX 최신
 section = recent
 max_count = 100
 frequency = 1
 
-#[PLEX 영화]
-#title = PLEX 드라마
+#[PLEX 드라마]
 #section = 45
 #max_count = 50
 #frequency = 2
