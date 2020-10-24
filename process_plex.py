@@ -67,8 +67,6 @@ class ProcessPlex(ProcessBase):
             
             for item in rule[content_type]:
                 logger.debug('PLEX %s %s', content_type, item['title'])
-                if cls.is_working_time(item, mode) == False:
-                    continue
                 #max_count = item['max_count'] if 'max_count' in item else ModelSetting.get_int('default_max_count')
                 count = 0
                 try:
