@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div>
+  {{ macros.m_button_group([['global_setting_save_btn', '설정 저장']])}}
+  {{ macros.m_row_start('5') }}
+  {{ macros.m_row_end() }}
+
+  <nav>  
+    {{ macros.m_tab_head_start() }}
+      {{ macros.m_tab_head2('normal', '일반', true) }}
+      {{ macros.m_tab_head2('plex', 'PLEX', false) }}
+      {{ macros.m_tab_head2('wavve', '웨이브', false) }}
+      {{ macros.m_tab_head2('tving', '티빙', false) }}
+    {{ macros.m_tab_head_end() }}
+  </nav>
+  <form id='setting' name='setting'>
+  <div class="tab-content" id="nav-tabContent">
+    {{ macros.m_tab_content_start('normal', true) }}
+      {{ macros.setting_global_scheduler_sub_button(arg['scheduler'], arg['is_running']) }}
+      {{ macros.setting_input_text('xc_interval', '스케쥴링 실행 정보', value=arg['xc_interval'], col='3', desc=['Inverval(minute 단위)이나 Cron 설정']) }}
+      {{ macros.setting_checkbox('xc_auto_start', '시작시 자동실행', value=arg['xc_auto_start'], desc='On : 시작시 자동으로 스케쥴러에 등록됩니다.') }}
+      {{ macros.setting_input_int('default_freqeuncy', '기본 실행빈도', value=arg['default_freqeuncy'], min='1', desc=['아이템에 freqeuncy 값이 없을 때 대입되는 값']) }}
+      {{ macros.setting_input_int('default_max_count', '기본 최대수', value=arg['default_max_count'], min='1', desc=['아이템에 max_count 값이 없을 때 대입되는 값']) }}
+      {{ macros.m_hr() }}
+      {{ macros.info_text('', '스케쥴링', value=arg['scheduler_count'], desc=['재시작 이후 스케쥴링 실행 횟수'] ) }}
+      {{ macros.setting_button([['all_load_btn', '모든 아이템 로딩']], left='모든 아이템 로딩' ) }}
+      {{ macros.setting_button([['global_reset_db_sub_btn', '목록 초기화']], left='DB정리' ) }}
+    {{ macros.m_tab_content_end() }}
+
+    {{ macros.m_tab_content_start('plex', false) }}
+      {{ macros.setting_checkbox('plex_use', '사용', value=arg['plex_use'], desc=None) }}
+      {{ macros.setting_input_text('plex_server', 'URL', value=arg['plex_server']) }}
+      {{ macros.setting_input_text('plex_token', '토큰', value=arg['plex_token']) }}
+      {{ macros.setting_input_textarea('plex_vod', '영화', value=arg['plex_vod'], row='10', desc=None) }}
+      {{ macros.setting_input_textarea('plex_series', 'TV', value=arg['plex_series'], row='10', desc=['', 'title : 카테고리 제목', 'section : 섹션번호. recent인 경우 쇼, 무비 전체', 'max_count : 최대 컨텐츠 수.', 'frequency : 스케쥴링 빈도. 0 : 첫스케쥬-스케쥴링에 의해 실행안함, 스케쥴링 실행횟수 % 값이 0인 경우 실행.']) }}
+    {{ macros.m_tab_content_end() }}
+    
+    {{ macros.m_tab_content_start('wavve', false) }}
+      {{ macros.setting_checkbox('wavve_use', '사용', value=arg['wavve_use'], desc=None) }}
+      {{ macros.setting_input_text('wavve_login_data', '로그인 데이터', value=arg['wavve_login_data']) }}
+      {{ macros.setting_checkbox('wavve_use_proxy', 'Proxy 사용', value=arg['wavve_use_proxy'], desc=['Proxy 서버와 재생 기기가 같은 네트워크여야 함.']) }}
+      {{ macros.setting_input_text('wavve_proxy_url', 'Proxy URL', value=arg['wavve_proxy_url']) }}
+      {{ macros.setting_select('wavve_quality', '화질', [['FHD','FHD'], ['HD','HD'], ['SD', 'SD']], col='3', value=arg['wavve_quality'])}}
+      {{ macros.setting_checkbox('wavve_is_adult', '성인', value=arg['wavve_is_adult'], desc=None) }}
+      {{ macros.setting_input_textarea('wavve_live', '라이브', value=arg['wavve_live'], row='10', desc=['category']) }}
+      {{ macros.setting_input_textarea('wavve_vod', '영화', value=arg['wavve_vod'], row='10', desc=['category, max_count,  frequency']) }}
+      {{ macros.setting_input_textarea('wavve_series', 'TV', value=arg['wavve_series'], row='10', desc=['category, sub_category, max_count,  frequency']) }}
+    {{ macros.m_tab_content_end() }}
+
+    {{ macros.m_tab_content_start('tving', false) }}
+      {{ macros.setting_checkbox('tving_use', '사용', value=arg['tving_use'], desc=None) }}
+      {{ macros.setting_input_text('tving_login_data', '로그인 데이터', value=arg['tving_login_data']) }}
+      {{ macros.setting_checkbox('tving_use_proxy', 'Proxy 사용', value=arg['tving_use_proxy'], desc=None) }}
+      {{ macros.setting_input_text('tving_proxy_url', 'Proxy URL', value=arg['tving_proxy_url']) }}
+      {{ macros.setting_select('tving_quality', '화질', [['FHD','FHD'], ['HD','HD'], ['SD', 'SD']], col='3', value=arg['tving_quality'])}}
+      {{ macros.setting_checkbox('tving_is_adult', '성인', value=arg['tving_is_adult'], desc=None) }}
+      {{ macros.setting_input_textarea('tving_live', '라이브', value=arg['tving_live'], row='5', desc=None) }}
+      {{ macros.setting_input_textarea('tving_series', 'TV', value=arg['tving_series'], row='20', desc=['category, max_count, frequency']) }}
+    {{ macros.m_tab_content_end() }}
+  </div><!--tab-content-->
+</form>
+</div><!--전체-->
+
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var sub = "{{arg['sub'] }}";
+var current_data = null;
+
+$(document).ready(function(){
+});
+
+
+$("body").on('click', '#all_load_btn', function(e) {
+  e.preventDefault();
+  $.ajax({
+    url: '/'+package_name+'/ajax/'+sub+ '/all_load',
+    type: "POST", 
+    cache: false,
+    data: {},
+    dataType: "json",
+    success: function (ret) {
+      if (ret) {
+        $.notify('<strong>백그라운드 작업이 시작되었습니다.</strong>', {type: 'success'});
+      }
+    }
+  });
+});
+
+
+</script>    
+{% endblock %}
