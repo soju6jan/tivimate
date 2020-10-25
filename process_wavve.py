@@ -204,7 +204,7 @@ class ProcessWavve(ProcessBase):
                 logger.error(traceback.format_exc())
             finally:
                 logger.debug('append : %s', len(cls.saved['series'][category_id]))
-                cls.vod_list += cls.saved['series'][category_id]
+                cls.series_list += cls.saved['series'][category_id]
         logger.debug('WAVVE series count : %s', len(cls.series_list))
 
 
