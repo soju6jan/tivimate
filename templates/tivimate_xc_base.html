@@ -26,6 +26,9 @@
       {{ macros.info_text('', '스케쥴링', value=arg['scheduler_count'], desc=['재시작 이후 스케쥴링 실행 횟수'] ) }}
       {{ macros.setting_button([['all_load_btn', '모든 아이템 로딩']], left='모든 아이템 로딩' ) }}
       {{ macros.setting_button([['global_reset_db_sub_btn', '목록 초기화']], left='DB정리' ) }}
+      {{ macros.m_hr() }}
+      {{ macros.info_text('', 'tivimate XC 주소', value=arg['tivimate_url'], desc=None ) }}
+      
     {{ macros.m_tab_content_end() }}
 
     {{ macros.m_tab_content_start('plex', false) }}

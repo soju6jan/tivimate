@@ -200,6 +200,7 @@ class LogicXC(LogicModuleBase):
             arg['scheduler'] = str(scheduler.is_include(job_id))
             arg['is_running'] = str(scheduler.is_running(job_id))
             arg['scheduler_count'] = u'%s 회 실행' % P.scheduler_count
+            arg['tivimate_url'] = '{}/{}'.format(SystemModelSetting.get('ddns'), P.package_name)
             return render_template('{package_name}_{module_name}_{sub}.html'.format(package_name=P.package_name, module_name=self.name, sub=sub), arg=arg)
         return render_template('sample.html', title='%s - %s' % (P.package_name, sub))
 
