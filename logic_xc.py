@@ -227,9 +227,9 @@ class LogicXC(LogicModuleBase):
     def scheduler_function(self):
         try:
             mode = 'force' if (P.scheduler_count % 50) == 0 else 'scheduler'
-            ProcessPlex.scheduler_function(mode=mode))
-            ProcessWavve.scheduler_function(mode=mode))
-            ProcessTving.scheduler_function(mode=mode))
+            ProcessPlex.scheduler_function(mode=mode)
+            ProcessWavve.scheduler_function(mode=mode)
+            ProcessTving.scheduler_function(mode=mode)
             logger.debug('scheduler_function end..')
         except Exception as e: 
             P.logger.error('Exception:%s', e)
