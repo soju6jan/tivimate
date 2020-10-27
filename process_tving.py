@@ -319,23 +319,27 @@ class ProcessTving(ProcessBase):
             start_dt = datetime(current_dt.year, current_dt.month, current_dt.day, int(current_dt.hour/3)*3, 0, 1)
             for part in range(2):
                 for i in range(5):
-                    tmp = start_dt + timedelta(hours=(i*3))
-                    date_param = tmp.strftime('%Y%m%d')
-                    start_time = str(tmp.hour).zfill(2) + '0000'
-                    end_time = str((tmp + timedelta(hours=3)).hour).zfill(2) + '0000'
-                    if app.config['config']['is_py2']:
-                        keys = cls.live_channel_list.keys()
-                    else:
-                        keys = list(cls.live_channel_list.keys())
-                    ch = keys[:20] if part == 0 else keys[20:]
-                    data = Tving.get_schedules(ch, date_param, start_time, end_time)['body']
-                    for ch in data['result']:
-                        for schedule in ch['schedules']:
-                            entity = {}
-                            entity['start_time'] = datetime.strptime(str(schedule['broadcast_start_time']), '%Y%m%d%H%M%S')
-                            entity['end_time'] = datetime.strptime(str(schedule['broadcast_end_time']), '%Y%m%d%H%M%S')
-                            entity['title'] = schedule['program']['name']['ko']
-                            cls.live_channel_list[ch['channel_code']]['list'].append(entity)
+                    try:
+                        tmp = start_dt + timedelta(hours=(i*3))
+                        date_param = tmp.strftime('%Y%m%d')
+                        start_time = str(tmp.hour).zfill(2) + '0000'
+                        end_time = str((tmp + timedelta(hours=3)).hour).zfill(2) + '0000'
+                        if app.config['config']['is_py2']:
+                            keys = cls.live_channel_list.keys()
+                        else:
+                            keys = list(cls.live_channel_list.keys())
+                        ch = keys[:20] if part == 0 else keys[20:]
+                        data = Tving.get_schedules(ch, date_param, start_time, end_time)['body']
+                        for ch in data['result']:
+                            for schedule in ch['schedules']:
+                                entity = {}
+                                entity['start_time'] = datetime.strptime(str(schedule['broadcast_start_time']), '%Y%m%d%H%M%S')
+                                entity['end_time'] = datetime.strptime(str(schedule['broadcast_end_time']), '%Y%m%d%H%M%S')
+                                entity['title'] = schedule['program']['name']['ko']
+                                cls.live_channel_list[ch['channel_code']]['list'].append(entity)
+                    except Exception as e: 
+                        logger.error('Exception:%s', e)
+                        logger.error(traceback.format_exc())
         except Exception as e: 
             logger.error('Exception:%s', e)
             logger.error(traceback.format_exc())
