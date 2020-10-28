@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 
 # third-party
-from flask import request, render_template, jsonify, redirect
+from flask import request, render_template, jsonify, redirect, Response
 from sqlalchemy import or_, and_, func, not_, desc
 from lxml import etree as ET
 import requests
@@ -31,16 +31,39 @@ def tving_live():
     c_id = request.args.get('channelid')
     proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
     data, url = Tving.get_episode_json(c_id, quality, ModelSetting.get('tving_login_data'), proxy=proxy, is_live=True)
-    data = requests.get(url).text
-    temp = url.split('playlist.m3u8')
-    rate = ['chunklist_b5128000.m3u8', 'chunklist_b1628000.m3u8', 'chunklist_b1228000.m3u8', 'chunklist_b1128000.m3u8', 'chunklist_b628000.m3u8', 'chunklist_b378000.m3u8']
-    for r in rate:
-        if data.find(r) != -1:
-            url1 = '%s%s%s' % (temp[0], r, temp[1])
-            data1 = requests.get(url1).text
-            data1 = data1.replace('media', '%smedia' % temp[0]).replace('.ts', '.ts%s' % temp[1])
-            return data1
-    return url
+    if data['body']['stream']['drm_yn'] == 'N':
+        data = requests.get(url).text
+        temp = url.split('playlist.m3u8')
+        rate = ['chunklist_b5128000.m3u8', 'chunklist_b1628000.m3u8', 'chunklist_b1228000.m3u8', 'chunklist_b1128000.m3u8', 'chunklist_b628000.m3u8', 'chunklist_b378000.m3u8']
+        for r in rate:
+            if data.find(r) != -1:
+                url1 = '%s%s%s' % (temp[0], r, temp[1])
+                data1 = requests.get(url1).text
+                data1 = data1.replace('media', '%smedia' % temp[0]).replace('.ts', '.ts%s' % temp[1])
+                return data1
+        return url
+    else:
+        #return Response(url, mimetype='application/dash+xml')
+
+        import framework.common.util as CommonUtil
+        filename = os.path.join(path_data, 'output', '%s.strm' % c_id)
+        CommonUtil.write_file(url, filename) 
+        
+
+        ret = '/file/data/output/%s.strm' % c_id
+        if SystemModelSetting.get_bool('auth_use_apikey'):
+            ret += '?apikey=%s' % SystemModelSetting.get('auth_apikey')
+        return redirect(ret)
+
+"""
+@P.blueprint.route('/proxy', methods=['POST'])
+def proxy():
+    proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
+    if proxy is not None:
+        proxies={"https": proxy, 'http':proxy}
+    data = requests.get(request.form['url'], proxies=proxies).json()
+    return jsonify(data)
+"""
 
 
 
@@ -54,7 +77,7 @@ class ProcessTving(ProcessBase):
                 return
             if mode == 'force' or cls.live_list is None:
                 cls.make_live_data(mode)
-            #cls.make_vod_data(mode)
+            cls.make_vod_data(mode)
             cls.make_series_data(mode)
         except Exception as e:
             logger.error('Exception:%s', e)
@@ -70,14 +93,14 @@ class ProcessTving(ProcessBase):
             try:
                 category_id =  str(item['id']) + ProcessTving.unique
                 cls.live_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
-                #live_list = Tving.get_live_list(list_type=item['category'], order='name')
-                live_list = Tving.get_live_list(list_type=item['category'])
+                live_list = Tving.get_live_list(list_type=item['category'], order='name')
+                #live_list = Tving.get_live_list(list_type=item['category'], except_drm=False)
                 if live_list is None or len(live_list) == 0:
                     break
                 for live in live_list:
-                    xc_id = ModelTvingMap.get_xc_id('live', live['id'])
+                    xc_id = ModelTvingMap.get_xc_id('live', live['id'], live['is_drm'])
                     entity = {
-                        'name' : live['title'],
+                        'name' : '%s%s' % (live['title'], "(D)" if live['is_drm'] else ''),
                         "stream_type":"live",
                         "stream_id":"live",
                         'stream_id' : xc_id,
@@ -126,12 +149,12 @@ class ProcessTving(ProcessBase):
                         break
                     id_type = 'vod_' + item['category']
                     for vod in vod_list['result']:
-                        if vod['movie']['drm_yn'] == 'Y':
-                            continue
-                        xc_id = ModelTvingMap.get_xc_id('vod', vod['movie']['code'])
-                        db_item = ModelTvingMap.get_by_xc_id(xc_id)
+                        #if vod['movie']['drm_yn'] == 'Y':
+                        #    continue
+                        xc_id = ModelTvingMap.get_xc_id('vod', vod['movie']['code'], is_drm=(vod['movie']['drm_yn'] == 'Y'))
+                        #db_item = ModelTvingMap.get_by_xc_id(xc_id)
                         entity = {
-                            'name' : vod['vod_name']['ko'],
+                            'name' : vod['vod_name']['ko'] + ("(D)" if vod['movie']['drm_yn'] == 'Y' else ""),
                             "stream_type":"movie",
                             'stream_id' : xc_id,
                             'stream_icon' : 'https://image.tving.com' + vod['movie']['image'][-1]['url'],
@@ -230,7 +253,7 @@ class ProcessTving(ProcessBase):
                     'name' : program_data['content']['info']['movie']['name']['ko'],
                     "stream_type":"movie",
                     'stream_id' : vod_id,
-                    'container_extension': 'mp4', # 이거 필수
+                    'container_extension': 'strm' if db_item.is_drm else 'm3u8', # 이거 필수
                 }
             }
             return ret
@@ -304,7 +327,8 @@ class ProcessTving(ProcessBase):
             logger.debug(ret)
             return ret
         elif content_type == 'vod':
-            return db_item.program_data['decrypted_url']
+            data = requests.get('https://sjva.me/sjva/tving.php').json()
+            return data['body']['decrypted_url'].replace('<br>', '\n')
         else:
             proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
             data, url = Tving.get_episode_json(content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), proxy=proxy)
@@ -357,21 +381,21 @@ class ModelTvingMap(db.Model):
     program_data = db.Column(db.JSON)
     is_drm = db.Column(db.Boolean)
     
-    def __init__(self, tving_id, id_type):
+    def __init__(self, tving_id, id_type, is_drm):
         self.tving_id = tving_id
         self.id_type = id_type
-        self.is_drm = False
+        self.is_drm = is_drm
 
     def as_dict(self):
         ret = {x.name: getattr(self, x.name) for x in self.__table__.columns}
         return ret
 
     @classmethod
-    def get_xc_id(cls, id_type, tving_id):
+    def get_xc_id(cls, id_type, tving_id, is_drm=False):
         item = db.session.query(cls).filter_by(tving_id=tving_id).filter_by(id_type=id_type).first()
         save_flag = False
         if item is None:
-            item = ModelTvingMap(tving_id, id_type)
+            item = ModelTvingMap(tving_id, id_type, is_drm)
             save_flag = True
         if save_flag:
             db.session.add(item)
@@ -382,12 +406,16 @@ class ModelTvingMap(db.Model):
     def get_by_xc_id(cls, xc_id):
         xc_id = int(xc_id[:-1])
         ret = db.session.query(cls).filter_by(xc_id=xc_id).first()
-        if ret.id_type.startswith('vod'):
+        if ret.id_type.startswith('vod') and ret.program_data is None:
+            #from sqlalchemy.orm.attributes import flag_modified
             proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
+            
             ret.program_data = Tving.get_movie_json2(ret.tving_id, '', ModelSetting.get('tving_login_data'), proxy=proxy, quality= Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))['body']
+
+            
+            #flag_modified(ret, 'program_data')
             db.session.add(ret)
             db.session.commit()
-        
         if ret.id_type.startswith('series') and ret.program_data is None:
             ret.program_data = Tving.get_program_programid(ret.tving_id)['body']
             db.session.add(ret)
@@ -401,6 +429,7 @@ tving_default_live = u'''
 '''
 
 tving_default_vod = u'''
+[티빙]\ncategory = live\nmax_count = 100\nfrequency = 72
 [티빙]\ncategory = all\nmax_count = 100\nfrequency = 72
 '''
 
