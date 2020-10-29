@@ -130,7 +130,9 @@ def redirect_streaming_url(content_type, path):
     tmp = path.split('/')[-1].split('.')
     xc_id = tmp[0]
     url = source_list[int(xc_id)%10].get_streaming_url(xc_id, content_type)
-    if tmp[1] == 'strm':
+    #if tmp[1] == 'strm':
+    #    return url
+    if content_type == 'vod' and (int(xc_id)%10) == 2:
         return url
     return redirect(url)
 

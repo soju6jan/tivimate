@@ -252,7 +252,8 @@ class ProcessTving(ProcessBase):
                     'name' : program_data['content']['info']['movie']['name']['ko'],
                     "stream_type":"movie",
                     'stream_id' : vod_id,
-                    'container_extension': 'strm' if db_item.is_drm else 'm3u8', # 이거 필수
+                    #'container_extension': 'strm' if db_item.is_drm else 'm3u8', # 이거 필수
+                    'container_extension': 'mp4',#' if db_item.is_drm else 'm3u8', # 이거 필수
                 }
             }
             return ret
