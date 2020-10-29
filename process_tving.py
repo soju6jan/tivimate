@@ -76,7 +76,7 @@ class ProcessTving(ProcessBase):
                 return
             if mode == 'force' or cls.live_list is None:
                 cls.make_live_data(mode)
-            #cls.make_vod_data(mode)
+            cls.make_vod_data(mode)
             cls.make_series_data(mode)
         except Exception as e:
             logger.error('Exception:%s', e)
