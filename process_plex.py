@@ -100,8 +100,12 @@ class ProcessPlex(ProcessBase):
                         if tag_video.attrib['type'] == 'movie':
                             # mp4만
                             tag_part = tag_media.xpath('.//part')[0]
-                            if 'container' not in tag_part.attrib or tag_part.attrib['container'] != 'mp4':
+                            container = tag_part.attrib['container']
+                            if ModelSetting.get_bool('plex_all_container') == False and  container != 'mp4':
                                 continue
+
+                            #if 'container' not in tag_part.attrib or tag_part.attrib['container'] != 'mp4':
+                            #    continue
                             
                             xc_id = ModelPlexMap.get_xc_id(content_type + '_%s' % item['section'], tag_video.attrib['ratingkey'])
                             entity = {
@@ -128,7 +132,7 @@ class ProcessPlex(ProcessBase):
                                             'name' : entity['name'],
                                             "stream_type":"movie",
                                             'stream_id' : entity['stream_id'],
-                                            'container_extension': 'mp4',
+                                            'container_extension': container,
                                         }
                                     },
                                 })
@@ -214,7 +218,10 @@ class ProcessPlex(ProcessBase):
                 else:
                     continue
                 tag_part = tag_media.xpath('.//part')[0]
-                if 'container' not in tag_part.attrib or tag_part.attrib['container'] != 'mp4':
+                if 'container' not in tag_part.attrib:
+                    continue
+                container = tag_part.attrib['container']
+                if ModelSetting.get_bool('plex_all_container') == False and  container != 'mp4':
                     continue
                 xc_id = ModelPlexMap.get_xc_id('episode', tag_video.attrib['ratingkey'])
                 #episode_db_item = ModelPlexMap.get_by_xc_id(xc_id)
@@ -222,7 +229,7 @@ class ProcessPlex(ProcessBase):
                     "id" : xc_id,
                     "episode_num": tag_video.attrib['index'] if 'index' in tag_video.attrib else tag_video.attrib['originallyavailableat'],
                     "title" : u'%s회 (%s)' % (tag_video.attrib['index'] if 'index' in tag_video.attrib else '', tag_video.attrib['originallyavailableat'] if 'originallyavailableat' in tag_video.attrib else ''),
-                    "container_extension": 'mp4',
+                    "container_extension": container,
                     "info": {
                         "movie_image" : '%s%s?X-Plex-Token=%s' % (ModelSetting.get('plex_server'), tag_video.attrib['thumb'], ModelSetting.get('plex_token')),
                     },

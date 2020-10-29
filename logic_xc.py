@@ -169,6 +169,7 @@ class LogicXC(LogicModuleBase):
         'plex_token' : '',
         'plex_vod' : plex_default_vod,
         'plex_series' : plex_default_series,
+        'plex_all_container' : 'False',
 
         'wavve_use' : 'True',
         'wavve_login_data' : '', 
