@@ -42,20 +42,17 @@ def tving_live():
                 data1 = data1.replace('media', '%smedia' % temp[0]).replace('.ts', '.ts%s' % temp[1])
                 return data1
         return url
+"""
     else:
         #return Response(url, mimetype='application/dash+xml')
-
         import framework.common.util as CommonUtil
         filename = os.path.join(path_data, 'output', '%s.strm' % c_id)
         CommonUtil.write_file(url, filename) 
-        
-
         ret = '/file/data/output/%s.strm' % c_id
         if SystemModelSetting.get_bool('auth_use_apikey'):
             ret += '?apikey=%s' % SystemModelSetting.get('auth_apikey')
         return redirect(ret)
 
-"""
 @P.blueprint.route('/proxy', methods=['POST'])
 def proxy():
     proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
@@ -73,11 +70,13 @@ class ProcessTving(ProcessBase):
     @classmethod 
     def scheduler_function(cls, mode='scheduler'):
         try:
+            #db.session.query(ModelTvingMap).delete()
+            #db.session.commit()
             if ModelSetting.get_bool('tving_use') == False:
                 return
             if mode == 'force' or cls.live_list is None:
                 cls.make_live_data(mode)
-            cls.make_vod_data(mode)
+            #cls.make_vod_data(mode)
             cls.make_series_data(mode)
         except Exception as e:
             logger.error('Exception:%s', e)
