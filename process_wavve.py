@@ -99,7 +99,6 @@ class ProcessWavve(ProcessBase):
                 category_id =  str(item['id']) + ProcessWavve.unique
                 cls.vod_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
                 if cls.is_working_time(item, mode) == False:
-                    logger.debug('work no')
                     continue
                 else:
                     cls.saved['vod'][category_id] = []
@@ -117,12 +116,15 @@ class ProcessWavve(ProcessBase):
                         db_item = ModelWavveMap.get_by_xc_id(xc_id)
                         if db_item.program_data is None:
                             continue
-                        if db_item.is_drm:
+                        name = vod['title']
+                        if ModelSetting.get_bool('drm_include') == False and db_item.is_drm:
                             continue
+                        if ModelSetting.get_bool('drm_notify') and db_item.is_drm:
+                            name += '(D)'
                         if ModelSetting.get_bool('wavve_is_adult') == False and int(vod['targetage']) >= 18:
                             continue
                         entity = {
-                            'name' : vod['title'],
+                            'name' : name,
                             "stream_type":"movie",
                             'stream_id' : xc_id,
                             'stream_icon' : 'https://' + vod['image'],
@@ -159,7 +161,6 @@ class ProcessWavve(ProcessBase):
             cls.series_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
             try:
                 if cls.is_working_time(item, mode) == False:
-                    logger.debug('work no')
                     continue
                 else:
                     cls.saved['series'][category_id] = []
@@ -177,12 +178,15 @@ class ProcessWavve(ProcessBase):
                         id_type = id_type if item['category'] != '09' else 'series_foreign'
                         xc_id = ModelWavveMap.get_xc_id(id_type, episode['programid'])
                         db_item = ModelWavveMap.get_by_xc_id(xc_id)
-                        if db_item.is_drm:
+                        name = episode['programtitle']
+                        if ModelSetting.get_bool('drm_include') == False and db_item.is_drm:
                             continue
+                        if ModelSetting.get_bool('drm_notify') and db_item.is_drm:
+                            name += '(D)'
                         if ModelSetting.get_bool('wavve_is_adult') == False and int(episode['targetage']) >= 18:
                             continue
                         entity = {
-                            'name' : episode['programtitle'],
+                            'name' : name,
                             'series_id' : xc_id, 
                             'cover' : 'https://' + episode['image'],
                             'category_id' : category_id,
@@ -228,7 +232,7 @@ class ProcessWavve(ProcessBase):
                     'name' : program_data['title'],
                     "stream_type":"movie",
                     'stream_id' : vod_id,
-                    'container_extension': 'mp4', # 이거 필수
+                    'container_extension': 'mpd' if db_item.is_drm else 'm3u8', # 이거 필수
                 }
             }
             return ret
@@ -271,7 +275,7 @@ class ProcessWavve(ProcessBase):
                         "id" : ModelWavveMap.get_xc_id('episode', episode['contentid']),
                         "episode_num": episode['episodenumber'],
                         "title" : u'%s회 (%s)' % (episode['episodenumber'], episode['releasedate']) if episode['type'] == 'general' else u'QVOD %s회 (%s)' % (episode['episodenumber'], episode['releasedate']),
-                        "container_extension": 'mp4',
+                        'container_extension': 'mpd' if db_item.is_drm else 'm3u8', # 이거 필수
                         "info": {
                             "movie_image" : 'https://' + episode['image'],
                             'duration_secs' : episode['playtime'],
@@ -290,7 +294,7 @@ class ProcessWavve(ProcessBase):
 
 
     @classmethod 
-    def get_streaming_url(cls, xc_id, content_type):
+    def get_streaming_url(cls, xc_id, content_type, extension="m3u8"):
         content_id = ModelWavveMap.get_by_xc_id(xc_id).wavve_id
         if content_type == 'series':
             if content_id.startswith('PQV_'):
@@ -303,7 +307,10 @@ class ProcessWavve(ProcessBase):
             content_type = 'live'
 
         proxy = ModelSetting.get('wavve_proxy_url') if ModelSetting.get_bool('wavve_use_proxy') else None
-        ret = Wavve.streaming(content_type, content_id, ModelSetting.get('wavve_quality'), ModelSetting.get('wavve_login_data'), proxy=proxy)
+        if extension == 'm3u8':
+            ret = Wavve.streaming(content_type, content_id, ModelSetting.get('wavve_quality'), ModelSetting.get('wavve_login_data'), proxy=proxy)
+        else:
+            ret = Wavve.streaming2(content_type, content_id, ModelSetting.get('wavve_quality'), ModelSetting.get('wavve_login_data'), proxy=proxy, ishevc='n')
         return ret['playurl']
 
 
@@ -371,7 +378,6 @@ class ModelWavveMap(db.Model):
                         break
                 content_data = Wavve.vod_contents_contentid(contents['list'][index]['contentid'])
                 if content_data['drms'] != '':
-                    #logger.debug(content_data['drms'])
                     item.is_drm = True
         if save_flag:
             db.session.add(item)

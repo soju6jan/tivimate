@@ -129,12 +129,11 @@ def redirect_streaming_url(content_type, path):
     logger.debug('>> CONTENT : %s, PATH : %s, ags : %s', content_type, path, request.args)
     tmp = path.split('/')[-1].split('.')
     xc_id = tmp[0]
-    url = source_list[int(xc_id)%10].get_streaming_url(xc_id, content_type)
-    #if tmp[1] == 'strm':
-    #    return url
-    if content_type == 'vod' and (int(xc_id)%10) == 2:
-        return url
+    url = source_list[int(xc_id)%10].get_streaming_url(xc_id, content_type, extension=tmp[1])
+    if type(url) == type({}):
+        return jsonify(url)
     return redirect(url)
+        
 
 @P.blueprint.route('/movie/<path:path>')
 def movie(path):
@@ -165,6 +164,8 @@ class LogicXC(LogicModuleBase):
         'pass' : 'pass',
         'default_frequency' : '1',
         'default_max_count' : '20',
+        'drm_include' : 'False',
+        'drm_notify' : 'True',
 
         'plex_use' : 'False',
         'plex_server' : '',
@@ -192,6 +193,7 @@ class LogicXC(LogicModuleBase):
         'tving_live' : tving_default_live, 
         'tving_vod' : tving_default_vod, 
         'tving_series' : tving_default_series, 
+        'tving_deviceid' : '',
     }
 
     def __init__(self, P):
@@ -226,6 +228,15 @@ class LogicXC(LogicModuleBase):
             P.logger.error('Exception:%s', e)
             P.logger.error(traceback.format_exc())
             return jsonify({'ret':'exception', 'log':str(e)})
+
+    def reset_db(self):
+        from .process_wavve import ModelWavveMap
+        db.session.query(ModelWavveMap).delete()
+        from .process_tving import ModelTvingMap
+        db.session.query(ModelTvingMap).delete()
+        db.session.commit()
+        return True
+        
 
     #########################################################
 

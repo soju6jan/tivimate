@@ -42,26 +42,6 @@ def tving_live():
                 data1 = data1.replace('media', '%smedia' % temp[0]).replace('.ts', '.ts%s' % temp[1])
                 return data1
         return url
-"""
-    else:
-        #return Response(url, mimetype='application/dash+xml')
-        import framework.common.util as CommonUtil
-        filename = os.path.join(path_data, 'output', '%s.strm' % c_id)
-        CommonUtil.write_file(url, filename) 
-        ret = '/file/data/output/%s.strm' % c_id
-        if SystemModelSetting.get_bool('auth_use_apikey'):
-            ret += '?apikey=%s' % SystemModelSetting.get('auth_apikey')
-        return redirect(ret)
-
-@P.blueprint.route('/proxy', methods=['POST'])
-def proxy():
-    proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
-    if proxy is not None:
-        proxies={"https": proxy, 'http':proxy}
-    data = requests.get(request.form['url'], proxies=proxies).json()
-    return jsonify(data)
-"""
-
 
 
 class ProcessTving(ProcessBase):
@@ -70,8 +50,6 @@ class ProcessTving(ProcessBase):
     @classmethod 
     def scheduler_function(cls, mode='scheduler'):
         try:
-            #db.session.query(ModelTvingMap).delete()
-            #db.session.commit()
             if ModelSetting.get_bool('tving_use') == False:
                 return
             if mode == 'force' or cls.live_list is None:
@@ -92,14 +70,18 @@ class ProcessTving(ProcessBase):
             try:
                 category_id =  str(item['id']) + ProcessTving.unique
                 cls.live_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
-                live_list = Tving.get_live_list(list_type=item['category'], order='name')
-                #live_list = Tving.get_live_list(list_type=item['category'], except_drm=False)
+                live_list = Tving.get_live_list(list_type=item['category']) #, order='name')
                 if live_list is None or len(live_list) == 0:
                     break
                 for live in live_list:
+                    if ModelSetting.get('drm_include') == False and live['is_drm']:
+                        continue
                     xc_id = ModelTvingMap.get_xc_id('live', live['id'], live['is_drm'])
+                    name = live['title']
+                    if  live['is_drm'] and ModelSetting.get_bool('drm_notify'):
+                        name += '(D)'
                     entity = {
-                        'name' : '%s%s' % (live['title'], "(D)" if live['is_drm'] else ''),
+                        'name' : name,
                         "stream_type":"live",
                         "stream_id":"live",
                         'stream_id' : xc_id,
@@ -122,21 +104,18 @@ class ProcessTving(ProcessBase):
         cls.make_channel_epg_data()
 
 
-
     @classmethod
     def make_vod_data(cls, mode):
         cls.vod_categories = []
         cls.vod_list = []
         
         for item in cls.make_json(ModelSetting.get('tving_vod')):
-            logger.debug('TVING vod %s', item['title'])
             if ModelSetting.get_bool('tving_is_adult') == False and 'is_adult' in item and item['is_adult']:
                 continue
             try:
                 category_id =  str(item['id']) + ProcessTving.unique
                 cls.vod_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
                 if cls.is_working_time(item, mode) == False:
-                    logger.debug('work no')
                     continue
                 else:
                     cls.saved['vod'][category_id] = []
@@ -148,16 +127,18 @@ class ProcessTving(ProcessBase):
                         break
                     id_type = 'vod_' + item['category']
                     for vod in vod_list['result']:
-                        #if vod['movie']['drm_yn'] == 'Y':
-                        #    continue
+                        if ModelSetting.get('drm_include') == False and vod['movie']['drm_yn'] == 'Y':
+                            continue
                         xc_id = ModelTvingMap.get_xc_id('vod', vod['movie']['code'], is_drm=(vod['movie']['drm_yn'] == 'Y'))
-                        #db_item = ModelTvingMap.get_by_xc_id(xc_id)
+                        name = vod['vod_name']['ko']
+                        if vod['movie']['drm_yn'] == 'Y' and ModelSetting.get_bool('drm_notify'):
+                            name += '(D)'
+
                         entity = {
-                            'name' : vod['vod_name']['ko'] + ("(D)" if vod['movie']['drm_yn'] == 'Y' else ""),
+                            'name' : name,
                             "stream_type":"movie",
                             'stream_id' : xc_id,
                             'stream_icon' : 'https://image.tving.com' + vod['movie']['image'][-1]['url'],
-                            #'rating' : vod['rating'],
                             'category_id' : category_id,
                             'is_adult' : '0',
                         }
@@ -171,7 +152,7 @@ class ProcessTving(ProcessBase):
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
             finally:
-                logger.debug('append : %s', len(cls.saved['vod'][category_id]))
+                logger.debug('title : %s , append : %s', item['title'], len(cls.saved['vod'][category_id]))
                 cls.vod_list += cls.saved['vod'][category_id]
         logger.debug('TVING vod count : %s', len(cls.vod_list))
 
@@ -182,14 +163,12 @@ class ProcessTving(ProcessBase):
         timestamp = int(time.time())
         count = 0
         for item in cls.make_json(ModelSetting.get('tving_series')):
-            logger.debug('TVING series %s', item['title'])
             if ModelSetting.get_bool('tving_is_adult') == False and 'is_adult' in item and item['is_adult']:
                 continue
             category_id =  str(item['id']) + ProcessTving.unique
             cls.series_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
             try:
                 if cls.is_working_time(item, mode) == False:
-                    logger.debug('work no')
                     continue
                 else:
                     cls.saved['series'][category_id] = []
@@ -201,9 +180,8 @@ class ProcessTving(ProcessBase):
                         break                  
                     for idx, episode in enumerate(episode_list['body']['result']):
                         id_type = 'series_%s' % item['category']
-                        xc_id = ModelTvingMap.get_xc_id(id_type, episode['program']['code'])
-                        #db = ModelTvingMap.get_by_xc_id(xc_id)
-                        if episode['episode']['drm_yn'] == 'Y':
+                        xc_id = ModelTvingMap.get_xc_id(id_type, episode['program']['code'], is_drm=(episode['episode']['drm_yn'] == 'Y'))
+                        if ModelSetting.get('drm_include') == False and episode['episode']['drm_yn'] == 'Y':
                             continue
                         if ModelSetting.get_bool('tving_is_adult') == False and episode['program']['adult_yn'] == 'Y':
                             continue
@@ -212,8 +190,11 @@ class ProcessTving(ProcessBase):
                             if tmp['code']  == 'CAIP0900':
                                 image_url = 'https://image.tving.com' + tmp['url']
                                 break
+                        name = episode['program']['name']['ko']
+                        if episode['episode']['drm_yn'] == 'Y' and ModelSetting.get_bool('drm_notify'):
+                            name += '(D)'
                         entity = {
-                            'name' : episode['program']['name']['ko'],
+                            'name' : name,
                             'series_id' : xc_id, 
                             'cover' : image_url,
                             'category_id' : category_id,
@@ -244,16 +225,13 @@ class ProcessTving(ProcessBase):
                     'plot' : program_data['content']['info']['movie']['story']['ko'], 
                     'cast' : ', '.join(program_data['content']['info']['movie']['actor']),
                     'director' : ', '.join(program_data['content']['info']['movie']['director']),
-                    #'genre' : ', '.join([x['text'] for x in program_data['genre']['list']]),
-                    #'releasedate' : program_data['releasedate'],
                     'duration_secs' : program_data['content']['info']['movie']['duration'],
                 },
                 'movie_data' : {
                     'name' : program_data['content']['info']['movie']['name']['ko'],
                     "stream_type":"movie",
                     'stream_id' : vod_id,
-                    #'container_extension': 'strm' if db_item.is_drm else 'm3u8', # 이거 필수
-                    'container_extension': 'm3u',#' if db_item.is_drm else 'm3u8', # 이거 필수
+                    'container_extension': 'mpd' if db_item.is_drm else 'm3u8', # 이거 필수
                 }
             }
             return ret
@@ -282,7 +260,6 @@ class ProcessTving(ProcessBase):
                 ],
                 'info' : {
                     "name" : program_data['name']['ko'], 
-                    #"cover" : 'https://' + program_data['posterimage'],
                     'plot' : program_data['synopsis']['ko'], 
                     'cast' : ', '.join(program_data['actor']),
                     'director' : ', '.join(program_data['director']),
@@ -293,20 +270,17 @@ class ProcessTving(ProcessBase):
             }
             page = 1
             index = 1
-            #is_first = True
-            #while True:
-            # 한번에 리턴함
             episode_data = Tving.get_frequency_programid(content_id, page=page)['body']
+
             ret['info']['genre'] += '   ' + episode_data['result'][0]['channel']['name']['ko']
             for episode in list(reversed(episode_data['result'])):
                 item = {
                     "id" : ModelTvingMap.get_xc_id('episode', episode['episode']['code']),
                     "episode_num": episode['episode']['frequency'],
                     "title" : u'%s회 (%s)' % (episode['episode']['frequency'], cls.date_change(episode['episode']['broadcast_date'])),
-                    "container_extension": 'mp4',
+                    "container_extension": 'mpd' if db_item.is_drm else 'm3u8',
                     "info": {
                         "movie_image" : 'https://image.tving.com' + episode['episode']['image'][0]['url'] if len(episode['episode']['image']) > 0 else '',
-                        #'duration_secs' : episode['playtime'],
                     },
                     "season": 1,
                 }
@@ -319,27 +293,42 @@ class ProcessTving(ProcessBase):
 
 
     @classmethod 
-    def get_streaming_url(cls, xc_id, content_type):
+    def get_streaming_url(cls, xc_id, content_type, extension="m3u8"):
         db_item = ModelTvingMap.get_by_xc_id(xc_id)
         content_id = db_item.tving_id
         if content_type == 'live':
-            ret = '/tivimate/tving_live.m3u8?channelid=%s' % content_id
-            logger.debug(ret)
+            if db_item.is_drm:
+                #if extension == 'mpd':
+                proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
+                data = Tving.get_stream_info_by_web('live', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), deviceid=ModelSetting.get('tving_deviceid'), proxy=proxy)
+                return data['play_info']
+                #else:
+                #    ret = '/tivimate/live/a/a/%s.mpd' % xc_id
+            else:
+                ret = '/tivimate/tving_live.m3u8?channelid=%s' % content_id
             return ret
         elif content_type == 'vod':
-            data = requests.get('https://sjva.me/sjva/tving.php').json()
-            return data['body']['decrypted_url'].replace('<br>', '\n')
+            proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
+            if extension == "mpd":
+                data = Tving.get_stream_info_by_web('movie', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), deviceid=ModelSetting.get('tving_deviceid'), proxy=proxy)
+                return data['play_info']
+            else:
+                data, url = Tving.get_episode_json(content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), proxy=proxy)    
+                return url
         else:
             proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
-            data, url = Tving.get_episode_json(content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), proxy=proxy)
-            return url
+            if extension == "mpd":
+                data = Tving.get_stream_info_by_web('vod', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), deviceid=ModelSetting.get('tving_deviceid'), proxy=proxy)
+                return data['play_info'] 
+            else:
+                data, url = Tving.get_episode_json(content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), proxy=proxy)
+                return url
 
 
     @classmethod
     def make_channel_epg_data(cls):
         try:
             current_dt = datetime.now()
-            #nextday = False
             start_dt = datetime(current_dt.year, current_dt.month, current_dt.day, int(current_dt.hour/3)*3, 0, 1)
             for part in range(2):
                 for i in range(5):
@@ -397,6 +386,10 @@ class ModelTvingMap(db.Model):
         if item is None:
             item = ModelTvingMap(tving_id, id_type, is_drm)
             save_flag = True
+        else:
+            if item.is_drm != is_drm:
+                item.is_drm = is_drm
+                save_flag = True
         if save_flag:
             db.session.add(item)
             db.session.commit()
@@ -407,13 +400,8 @@ class ModelTvingMap(db.Model):
         xc_id = int(xc_id[:-1])
         ret = db.session.query(cls).filter_by(xc_id=xc_id).first()
         if ret.id_type.startswith('vod') and ret.program_data is None:
-            #from sqlalchemy.orm.attributes import flag_modified
             proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
-            
             ret.program_data = Tving.get_movie_json2(ret.tving_id, '', ModelSetting.get('tving_login_data'), proxy=proxy, quality= Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))['body']
-
-            
-            #flag_modified(ret, 'program_data')
             db.session.add(ret)
             db.session.commit()
         if ret.id_type.startswith('series') and ret.program_data is None:

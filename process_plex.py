@@ -259,7 +259,7 @@ class ProcessPlex(ProcessBase):
 
 
     @classmethod 
-    def get_streaming_url(cls, xc_id, content_type):
+    def get_streaming_url(cls, xc_id, content_type, extension="m3u8"):
         db_item = ModelPlexMap.get_by_xc_id(xc_id)
         #if content_type == 'vod':
         #    return db_item.program_data['streaming_url']
