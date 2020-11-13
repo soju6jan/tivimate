@@ -310,7 +310,7 @@ class ProcessWavve(ProcessBase):
         if extension == 'm3u8':
             ret = Wavve.streaming(content_type, content_id, ModelSetting.get('wavve_quality'), ModelSetting.get('wavve_login_data'), proxy=proxy)
         else:
-            ret = Wavve.streaming2(content_type, content_id, ModelSetting.get('wavve_quality'), ModelSetting.get('wavve_login_data'), proxy=proxy, ishevc='n')
+            ret = Wavve.streaming2(content_type, content_id, ModelSetting.get('wavve_quality'), ModelSetting.get('wavve_login_data'), proxy=proxy)
         return ret['playurl']
 
 
