@@ -175,7 +175,6 @@ class LogicXC(LogicModuleBase):
         'plex_all_container' : 'False',
 
         'wavve_use' : 'True',
-        'wavve_login_data' : '', 
         'wavve_use_proxy' : 'False', 
         'wavve_proxy_url' : '', 
         'wavve_quality' : 'HD', 

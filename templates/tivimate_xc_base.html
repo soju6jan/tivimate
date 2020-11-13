@@ -44,7 +44,6 @@
     
     {{ macros.m_tab_content_start('wavve', false) }}
       {{ macros.setting_checkbox('wavve_use', '사용', value=arg['wavve_use'], desc=None) }}
-      {{ macros.setting_input_text('wavve_login_data', '로그인 데이터', value=arg['wavve_login_data']) }}
       {{ macros.setting_checkbox('wavve_use_proxy', 'Proxy 사용', value=arg['wavve_use_proxy'], desc=['Proxy 서버와 재생 기기가 같은 네트워크여야 함.']) }}
       {{ macros.setting_input_text('wavve_proxy_url', 'Proxy URL', value=arg['wavve_proxy_url']) }}
       {{ macros.setting_select('wavve_quality', '화질', [['FHD','FHD'], ['HD','HD'], ['SD', 'SD']], col='3', value=arg['wavve_quality'])}}
