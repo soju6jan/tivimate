@@ -307,10 +307,10 @@ class ProcessWavve(ProcessBase):
             content_type = 'live'
 
         proxy = ModelSetting.get('wavve_proxy_url') if ModelSetting.get_bool('wavve_use_proxy') else None
-        if extension == 'm3u8':
-            ret = Wavve.streaming(content_type, content_id, ModelSetting.get('wavve_quality'), ModelSetting.get('wavve_login_data'), proxy=proxy)
-        else:
+        if extension == 'mpd':
             ret = Wavve.streaming2(content_type, content_id, ModelSetting.get('wavve_quality'), ModelSetting.get('wavve_login_data'), proxy=proxy)
+        else:
+            ret = Wavve.streaming(content_type, content_id, ModelSetting.get('wavve_quality'), ModelSetting.get('wavve_login_data'), proxy=proxy)
         return ret['playurl']
 
 
