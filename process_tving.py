@@ -29,8 +29,7 @@ import framework.tving.api as Tving
 def tving_live():
     quality = Tving.get_quality_to_tving(ModelSetting.get('tving_quality'))
     c_id = request.args.get('channelid')
-    proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
-    data, url = Tving.get_episode_json(c_id, quality, ModelSetting.get('tving_login_data'), proxy=proxy, is_live=True)
+    data, url = Tving.get_episode_json(c_id, quality, is_live=True)
     if data['body']['stream']['drm_yn'] == 'N':
         data = requests.get(url).text
         temp = url.split('playlist.m3u8')
@@ -299,8 +298,7 @@ class ProcessTving(ProcessBase):
         if content_type == 'live':
             if db_item.is_drm:
                 #if extension == 'mpd':
-                proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
-                data = Tving.get_stream_info_by_web('live', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), deviceid=ModelSetting.get('tving_deviceid'), proxy=proxy)
+                data = Tving.get_stream_info_by_web('live', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))
                 return data['play_info']
                 #else:
                 #    ret = '/tivimate/live/a/a/%s.mpd' % xc_id
@@ -308,20 +306,18 @@ class ProcessTving(ProcessBase):
                 ret = '/tivimate/tving_live.m3u8?channelid=%s' % content_id
             return ret
         elif content_type == 'vod':
-            proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
             if extension == "mpd":
-                data = Tving.get_stream_info_by_web('movie', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), deviceid=ModelSetting.get('tving_deviceid'), proxy=proxy)
+                data = Tving.get_stream_info_by_web('movie', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))
                 return data['play_info']
             else:
-                data, url = Tving.get_episode_json(content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), proxy=proxy)    
+                data, url = Tving.get_episode_json(content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))    
                 return url
         else:
-            proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
             if extension == "mpd":
-                data = Tving.get_stream_info_by_web('vod', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), deviceid=ModelSetting.get('tving_deviceid'), proxy=proxy)
+                data = Tving.get_stream_info_by_web('vod', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))
                 return data['play_info'] 
             else:
-                data, url = Tving.get_episode_json(content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')), ModelSetting.get('tving_login_data'), proxy=proxy)
+                data, url = Tving.get_episode_json(content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))
                 return url
 
 
@@ -400,8 +396,7 @@ class ModelTvingMap(db.Model):
         xc_id = int(xc_id[:-1])
         ret = db.session.query(cls).filter_by(xc_id=xc_id).first()
         if ret.id_type.startswith('vod') and ret.program_data is None:
-            proxy = ModelSetting.get('tving_proxy_url') if ModelSetting.get_bool('tving_use_proxy') else None
-            ret.program_data = Tving.get_movie_json2(ret.tving_id, '', ModelSetting.get('tving_login_data'), proxy=proxy, quality= Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))['body']
+            ret.program_data = Tving.get_movie_json2(ret.tving_id, quality= Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))['body']
             db.session.add(ret)
             db.session.commit()
         if ret.id_type.startswith('series') and ret.program_data is None:

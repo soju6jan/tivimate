@@ -148,11 +148,6 @@ def live(path):
     return redirect_streaming_url('live', path)
 
 
-#@P.blueprint.route('/test.m3u')
-#def mpd():
-#    return "#EXTM3U\n#KODIPROP:inputstream.adaptive.license_type=com.widevine.alpha\n#KODIPROP:inputstream.adaptive.license_key=https://proxy.uat.widevine.com/proxy?provider=widevine_test\n#EXTINF:-1,Widevine encrypted\nhttps://storage.googleapis.com/wvmedia/cenc/h264/tears/tears.mpd"
-
-
 class LogicXC(LogicModuleBase):
     db_default = {
         'db_version' : '1',
@@ -175,8 +170,6 @@ class LogicXC(LogicModuleBase):
         'plex_all_container' : 'False',
 
         'wavve_use' : 'True',
-        'wavve_use_proxy' : 'False', 
-        'wavve_proxy_url' : '', 
         'wavve_quality' : 'HD', 
         'wavve_is_adult' : 'False', 
         'wavve_live' : wavve_default_live, 
@@ -184,15 +177,11 @@ class LogicXC(LogicModuleBase):
         'wavve_series' : wavve_default_series, 
 
         'tving_use' : 'True',
-        'tving_login_data' : '', 
-        'tving_use_proxy' : 'False', 
-        'tving_proxy_url' : '', 
         'tving_quality' : 'HD', 
         'tving_is_adult' : 'False', 
         'tving_live' : tving_default_live, 
         'tving_vod' : tving_default_vod, 
         'tving_series' : tving_default_series, 
-        'tving_deviceid' : '',
     }
 
     def __init__(self, P):
