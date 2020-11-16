@@ -340,12 +340,13 @@ class ProcessTving(ProcessBase):
                         ch = keys[:20] if part == 0 else keys[20:]
                         data = Tving.get_schedules(ch, date_param, start_time, end_time)['body']
                         for ch in data['result']:
-                            for schedule in ch['schedules']:
-                                entity = {}
-                                entity['start_time'] = datetime.strptime(str(schedule['broadcast_start_time']), '%Y%m%d%H%M%S')
-                                entity['end_time'] = datetime.strptime(str(schedule['broadcast_end_time']), '%Y%m%d%H%M%S')
-                                entity['title'] = schedule['program']['name']['ko']
-                                cls.live_channel_list[ch['channel_code']]['list'].append(entity)
+                            if ch['schedules'] is not None:
+                                for schedule in ch['schedules']:
+                                    entity = {}
+                                    entity['start_time'] = datetime.strptime(str(schedule['broadcast_start_time']), '%Y%m%d%H%M%S')
+                                    entity['end_time'] = datetime.strptime(str(schedule['broadcast_end_time']), '%Y%m%d%H%M%S')
+                                    entity['title'] = schedule['program']['name']['ko']
+                                    cls.live_channel_list[ch['channel_code']]['list'].append(entity)
                     except Exception as e: 
                         logger.error('Exception:%s', e)
                         logger.error(traceback.format_exc())
