@@ -100,6 +100,8 @@ class ProcessPlex(ProcessBase):
                         if tag_video.attrib['type'] == 'movie':
                             # mp4만
                             tag_part = tag_media.xpath('.//part')[0]
+                            if 'container' not in tag_part.attrib:
+                                continue
                             container = tag_part.attrib['container']
                             if ModelSetting.get_bool('plex_all_container') == False and  container != 'mp4':
                                 continue
