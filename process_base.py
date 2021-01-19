@@ -22,6 +22,8 @@ class ProcessBase(object):
 
     @classmethod 
     def get_live_streams(cls, category_id=None):
+        if cls.live_list is None:
+            return
         if category_id is None or category_id == 'all':
             return cls.live_list
         else:
@@ -42,6 +44,8 @@ class ProcessBase(object):
 
     @classmethod 
     def get_vod_streams(cls, category_id=None):
+        if cls.vod_list is None:
+            return
         if category_id is None or category_id == 'all':
             return cls.vod_list
         else:
@@ -61,6 +65,8 @@ class ProcessBase(object):
     
     @classmethod 
     def get_series(cls, category_id=None):
+        if cls.series_list is None:
+            return
         if category_id is None or category_id == 'all':
             return cls.series_list
         else:
