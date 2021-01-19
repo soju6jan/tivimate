@@ -21,8 +21,16 @@ class ProcessBase(object):
         return cls.live_categories
 
     @classmethod 
-    def get_live_streams(cls):
-        return cls.live_list
+    def get_live_streams(cls, category_id=None):
+        if category_id is None or category_id == 'all':
+            return cls.live_list
+        else:
+            ret = []
+            for item in cls.live_list:
+                if item['category_id'] == category_id:
+                    ret.append(item)
+            return ret
+
 
     @classmethod 
     def get_live_channel_list(cls):
@@ -33,8 +41,15 @@ class ProcessBase(object):
         return cls.vod_categories
 
     @classmethod 
-    def get_vod_streams(cls):
-        return cls.vod_list
+    def get_vod_streams(cls, category_id=None):
+        if category_id is None or category_id == 'all':
+            return cls.vod_list
+        else:
+            ret = []
+            for item in cls.vod_list:
+                if item['category_id'] == category_id:
+                    ret.append(item)
+            return ret
 
     @classmethod 
     def get_vod_info(cls, vod_id):
@@ -43,10 +58,18 @@ class ProcessBase(object):
     @classmethod 
     def get_series_categories(cls):
         return cls.series_categories
-
+    
     @classmethod 
-    def get_series(cls):
-        return cls.series_list
+    def get_series(cls, category_id=None):
+        if category_id is None or category_id == 'all':
+            return cls.series_list
+        else:
+            ret = []
+            for item in cls.series_list:
+                if item['category_id'] == category_id:
+                    ret.append(item)
+            return ret
+
 
     @classmethod 
     def get_series_info(cls, series_id):

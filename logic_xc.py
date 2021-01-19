@@ -75,7 +75,7 @@ def player_api_php():
                 output += data
     elif action == 'get_live_streams':
         for source in source_list:
-            data = source.get_live_streams()
+            data = source.get_live_streams(category_id=request.args.get('category_id'))
             if data is None or len(data) == 0:
                 continue
             for item in data:
@@ -90,7 +90,7 @@ def player_api_php():
                 output += data
     elif action == 'get_vod_streams':
         for source in source_list:
-            data = source.get_vod_streams()
+            data = source.get_vod_streams(category_id=request.args.get('category_id'))
             if data is None or len(data) == 0:
                 continue
             for item in data:
@@ -108,7 +108,7 @@ def player_api_php():
                 output += data
     elif action == 'get_series':
         for source in source_list:
-            data = source.get_series()
+            data = source.get_series(category_id=request.args.get('category_id'))
             if data is None or len(data) == 0:
                 continue
             for item in data:
