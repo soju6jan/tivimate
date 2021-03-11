@@ -206,7 +206,7 @@ class ProcessPlex(ProcessBase):
                     subtitle_url = '{}{}?X-Plex-Token={}&encoding=utf-8'.format(ModelSetting.get('plex_server'), stream.attrib['key'], ModelSetting.get('plex_token'))
                     if stream.attrib['codec'] == 'smi':
                         subtitle_url += "&format=srt"
-                    subtitles.append(subtitle_url)
+                    subtitles.append({'url':subtitle_url, 'language': stream.attrib['languagecode'] if 'languagecode' in stream.attrib else '', 'format' : stream.attrib['format']})
                     # https://github.com/plexinc/plex-for-kodi/blob/e6610e42ce1afd115cf59632b949e18597625323/lib/_included_packages/plexnet/plexstream.py#L106
             ret = db_item.program_data['vod_info']
             if subtitles:
