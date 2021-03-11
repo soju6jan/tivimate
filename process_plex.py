@@ -210,7 +210,7 @@ class ProcessPlex(ProcessBase):
                     # https://github.com/plexinc/plex-for-kodi/blob/e6610e42ce1afd115cf59632b949e18597625323/lib/_included_packages/plexnet/plexstream.py#L106
             ret = db_item.program_data['vod_info']
             if subtitles:
-                ret['subtitles'] = subtitles
+                ret['info']['subtitles'] = subtitles
             return ret
             #return db_item.program_data['vod_info']
         except Exception as e:
