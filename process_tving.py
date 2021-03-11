@@ -33,7 +33,7 @@ def tving_live():
     if data['body']['stream']['drm_yn'] == 'N':
         data = requests.get(url).text
         temp = url.split('playlist.m3u8')
-        rate = ['chunklist_b5128000.m3u8', 'chunklist_b1628000.m3u8', 'chunklist_b1228000.m3u8', 'chunklist_b1128000.m3u8', 'chunklist_b628000.m3u8', 'chunklist_b378000.m3u8']
+        rate = ['chunklist_b5128000.m3u8', 'chunklist_b1628000.m3u8', 'chunklist_b1228000.m3u8', 'chunklist_b1128000.m3u8', 'chunklist_b628000.m3u8', 'chunklist_b378000.m3u8', 'chunklist_b7692000.m3u8', 'chunklist_b3192000.m3u8', 'chunklist_b2442000.m3u8', 'chunklist_b1692000.m3u8', 'chunklist_b942000.m3u8', 'chunklist_b567000.m3u8', 'chunklist_b379500.m3u8']
         for r in rate:
             if data.find(r) != -1:
                 url1 = '%s%s%s' % (temp[0], r, temp[1])
