@@ -83,13 +83,14 @@ class ProcessPlex(ProcessBase):
                     else:
                         url = '{}/library/sections/{}/all?type={}&sort=addedAt:desc&X-Plex-Container-Start=0&X-Plex-Container-Size={}&X-Plex-Token={}'.format(ModelSetting.get('plex_server'), item['section'], plex_content, item['max_count'], ModelSetting.get('plex_token'))
 
+                    logger.debug(url)
                     doc = lxml.html.parse(py_urllib2.urlopen(url))
                     videos = doc.xpath("//video")
                     if len(videos) == 0:
                         videos = doc.xpath("//directory")
 
                     for tag_video in videos:
-                        #logger.debug('count : %s - %s', count, tag_video.attrib['title'].replace('  ', ' '))
+                        logger.debug('count : %s - %s', count, tag_video.attrib['title'].replace('  ', ' '))
                         if tag_video.attrib['type'] in ['movie', 'episode']:
                             tmp = tag_video.xpath('.//media')
                             if tmp:
@@ -129,6 +130,8 @@ class ProcessPlex(ProcessBase):
                                             'genre' : ', '.join([x.attrib['tag'] for x in tag_video.xpath('.//genre')]).rstrip(','), 
                                             'releasedate' : tag_video.attrib['originallyavailableat'] if 'originallyavailableat' in tag_video.attrib else '1900-01-01',
                                             'duration_secs' : int(tag_media.attrib['duration'])/1000,
+
+                                            #https://192-168-0-68.32f6e98680924c50b0d69534fa212e71.plex.direct:32400/library/streams/1709672?encoding=utf-8&format=srt&X-Plex-Token=y639N-_xzchLS3ev2pjJ
                                         },
                                         'movie_data' : {
                                             'name' : entity['name'],
@@ -189,7 +192,27 @@ class ProcessPlex(ProcessBase):
     def get_vod_info(cls, vod_id):
         try:
             db_item = ModelPlexMap.get_by_xc_id(vod_id)
-            return db_item.program_data['vod_info']
+            logger.debug(db_item.plex_id)
+            logger.debug(db_item.program_data)
+            
+            url = '{}/library/metadata/{}?X-Plex-Token={}'.format(ModelSetting.get('plex_server'), db_item.plex_id, ModelSetting.get('plex_token'))
+            logger.debug(url)
+            doc = lxml.html.parse(py_urllib2.urlopen(url))
+            streams = doc.xpath("//part/stream")
+            subtitles = []
+            for stream in streams:
+                if stream.attrib['streamtype'] == '3' and 'key' in stream.attrib:
+                    logger.debug(stream.attrib['key'])
+                    subtitle_url = '{}{}?X-Plex-Token={}&encoding=utf-8'.format(ModelSetting.get('plex_server'), stream.attrib['key'], ModelSetting.get('plex_token'))
+                    if stream.attrib['codec'] == 'smi':
+                        subtitle_url += "&format=srt"
+                    subtitles.append(subtitle_url)
+                    # https://github.com/plexinc/plex-for-kodi/blob/e6610e42ce1afd115cf59632b949e18597625323/lib/_included_packages/plexnet/plexstream.py#L106
+            ret = db_item.program_data['vod_info']
+            if subtitles:
+                ret['subtitles'] = subtitles
+            return ret
+            #return db_item.program_data['vod_info']
         except Exception as e:
             logger.error('Exception:%s', e)
             logger.error(traceback.format_exc())

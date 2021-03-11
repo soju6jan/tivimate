@@ -37,7 +37,7 @@
       {{ macros.setting_checkbox('plex_use', '사용', value=arg['plex_use'], desc=None) }}
       {{ macros.setting_input_text('plex_server', 'URL', value=arg['plex_server']) }}
       {{ macros.setting_input_text('plex_token', '토큰', value=arg['plex_token']) }}
-      {{ macros.setting_checkbox('plex_all_container', '모든 컨테이너 포함', value=arg['plex_all_container'], desc=['On : mkv, avi는 모든 컨테이너 포함. 외부 플레이어 필요', 'Off : mp4 컨테이너만 포함']) }}
+      {{ macros.setting_checkbox('plex_all_container', '모든 컨테이너 포함', value=arg['plex_all_container'], desc=['On : mkv, avi 등 모든 컨테이너 포함. 외부 플레이어 필요', 'Off : mp4 컨테이너만 포함']) }}
       {{ macros.setting_input_textarea('plex_vod', '영화', value=arg['plex_vod'], row='10', desc=None) }}
       {{ macros.setting_input_textarea('plex_series', 'TV', value=arg['plex_series'], row='10', desc=['', 'title : 카테고리 제목', 'section : 섹션번호. recent인 경우 쇼, 무비 전체', 'max_count : 최대 컨텐츠 수.', 'frequency : 스케쥴링 빈도. 0 : 첫스케쥬-스케쥴링에 의해 실행안함, 스케쥴링 실행횟수 % 값이 0인 경우 실행.']) }}
     {{ macros.m_tab_content_end() }}
