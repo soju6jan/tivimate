@@ -84,7 +84,8 @@ class ProcessPlex(ProcessBase):
                         url = '{}/library/sections/{}/all?type={}&sort=addedAt:desc&X-Plex-Container-Start=0&X-Plex-Container-Size={}&X-Plex-Token={}'.format(ModelSetting.get('plex_server'), item['section'], plex_content, item['max_count'], ModelSetting.get('plex_token'))
 
                     logger.debug(url)
-                    doc = lxml.html.parse(py_urllib2.urlopen(url))
+                    doc = lxml.html.parse(py_urllib2.urlopen(url, timeout=30))
+                    
                     videos = doc.xpath("//video")
                     if len(videos) == 0:
                         videos = doc.xpath("//directory")
@@ -186,7 +187,7 @@ class ProcessPlex(ProcessBase):
             else:
                 cls.series_categories = content_categories
                 cls.series_list = content_list
-
+            
 
     @classmethod 
     def get_vod_info(cls, vod_id):
