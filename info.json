@@ -1,1 +1,10 @@
-{"more": "", "version": "0.2.0.0", "name": "tivimate", "developer": "soju6jan", "home": "https://github.com/soju6jan/tivimate", "description": "Xstream codes \uc11c\ubc84. tivimate \uc5f0\ub3d9.", "icon": "", "category_name": "tv"}
+{
+    "version": "0.2.0.0",
+    "name": "tivimate",
+    "category_name": "tv",
+    "icon": "",
+    "developer": "soju6jan",
+    "description": "Xstream codes 서버. tivimate 연동.",
+    "home": "https://github.com/soju6jan/tivimate",
+    "more": ""
+}

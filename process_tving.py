@@ -45,14 +45,14 @@ def tving_live():
 
 class ProcessTving(ProcessBase):
     unique = '2'
-    saved = {'vod':{}, 'series':{}}
+    saved = {'live':{}, 'vod':{}, 'series':{}, 'live_channel_list':None}
     @classmethod 
     def scheduler_function(cls, mode='scheduler'):
         try:
             if ModelSetting.get_bool('tving_use') == False:
                 return
-            if mode == 'force' or cls.live_list is None:
-                cls.make_live_data(mode)
+            #if mode == 'force' or cls.live_list is None:
+            cls.make_live_data(mode)
             cls.make_vod_data(mode)
             cls.make_series_data(mode)
         except Exception as e:
@@ -69,6 +69,11 @@ class ProcessTving(ProcessBase):
             try:
                 category_id =  str(item['id']) + ProcessTving.unique
                 cls.live_categories.append({'category_id' : category_id, 'category_name':item['title'], 'parent_id':0})
+                if cls.is_working_time(item, mode) == False:
+                    continue
+                else:
+                    cls.saved['live'][category_id] = []
+                    cls.saved['live_channel_list'] = OrderedDict()
                 live_list = Tving.get_live_list(list_type=item['category']) #, order='name')
                 if live_list is None or len(live_list) == 0:
                     break
@@ -94,11 +99,14 @@ class ProcessTving(ProcessBase):
                         "direct_source":"",
                         "tv_archive_duration":0
                     }
-                    cls.live_channel_list[live['id']] = {'name':entity['name'], 'icon':entity['stream_icon'], 'list':[]}
-                    cls.live_list.append(entity)
+                    cls.saved['live_channel_list'][live['id']] = {'name':entity['name'], 'icon':entity['stream_icon'], 'list':[]}
+                    cls.saved['live'][category_id].append(entity)
             except Exception as e:
                 logger.error('Exception:%s', e)
                 logger.error(traceback.format_exc())
+            finally:
+                cls.live_list += cls.saved['live'][category_id]
+                cls.live_channel_list = cls.saved['live_channel_list']
         logger.debug('Tving live count : %s', len(cls.live_list))
         cls.make_channel_epg_data()
 
@@ -342,11 +350,16 @@ class ProcessTving(ProcessBase):
                         for ch in data['result']:
                             if ch['schedules'] is not None:
                                 for schedule in ch['schedules']:
-                                    entity = {}
-                                    entity['start_time'] = datetime.strptime(str(schedule['broadcast_start_time']), '%Y%m%d%H%M%S')
-                                    entity['end_time'] = datetime.strptime(str(schedule['broadcast_end_time']), '%Y%m%d%H%M%S')
-                                    entity['title'] = schedule['program']['name']['ko']
-                                    cls.live_channel_list[ch['channel_code']]['list'].append(entity)
+                                    try:
+                                        entity = {}
+                                        entity['start_time'] = datetime.strptime(str(schedule['broadcast_start_time']), '%Y%m%d%H%M%S')
+                                        entity['end_time'] = datetime.strptime(str(schedule['broadcast_end_time']), '%Y%m%d%H%M%S')
+                                        entity['title'] = schedule['program']['name']['ko']
+                                        if ch['channel_code'] in cls.live_channel_list:
+                                            cls.live_channel_list[ch['channel_code']]['list'].append(entity)
+                                    except Exception as e: 
+                                        logger.error('Exception:%s', e)
+                                        logger.error(traceback.format_exc())
                     except Exception as e: 
                         logger.error('Exception:%s', e)
                         logger.error(traceback.format_exc())
