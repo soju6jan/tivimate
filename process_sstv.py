@@ -156,8 +156,12 @@ class ProcessSstv(ProcessBase):
                     entity['start_time'] = datetime.strptime(start, '%Y%m%d%H%M%S') + timedelta(hours=9)
                     entity['end_time'] = datetime.strptime(stop, '%Y%m%d%H%M%S') + timedelta(hours=9)
                     entity['title'] = item.find('title').text.strip()
-                    entity['desc'] = item.find('desc').text.strip()
-                    entity['icon'] = item.find('icon').attrib['src']
+                    tmp = item.find('desc')
+                    if tmp is not None:
+                        entity['desc'] = tmp.text.strip()
+                    tmp = item.find('icon')
+                    if tmp is not None:
+                        entity['icon'] = tmp.attrib['src']
                     cls.live_channel_list[item.attrib['channel']]['list'].append(entity)
                 except Exception as exception:
                     logger.debug(exception)
