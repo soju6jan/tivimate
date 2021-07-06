@@ -57,12 +57,13 @@ class ProcessSstv(ProcessBase):
         group_list = []
         for index, item in enumerate(cls.data):
             try:
-                if ModelSetting.get_bool(f'sstv_only_kor'):
-                    group_name = item["group"]
-                elif ModelSetting.get_bool(f'sstv_group_only_country'):
+                if ModelSetting.get_bool(f'sstv_group_only_country'):
                     group_name = item["country"]
                 else:
-                    group_name = f'{item["country"]} {item["group"]}'
+                    if ModelSetting.get_bool(f'sstv_only_kor'):
+                        group_name = item["group"]
+                    else:
+                        group_name = f'{item["country"]} {item["group"]}'
 
                 current_category = None
                 for category in cls.live_categories:
