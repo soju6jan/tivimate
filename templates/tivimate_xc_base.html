@@ -12,6 +12,7 @@
       {{ macros.m_tab_head2('plex', 'PLEX', false) }}
       {{ macros.m_tab_head2('wavve', '웨이브', false) }}
       {{ macros.m_tab_head2('tving', '티빙', false) }}
+      {{ macros.m_tab_head2('sstv', '삼성TV+', false) }}
     {{ macros.m_tab_head_end() }}
   </nav>
   <form id='setting' name='setting'>
@@ -58,6 +59,11 @@
       {{ macros.setting_input_textarea('tving_live', '라이브', value=arg['tving_live'], row='5', desc=None) }}
       {{ macros.setting_input_textarea('tving_vod', '영화', value=arg['tving_vod'], row='10', desc=['category, max_count,  frequency']) }}
       {{ macros.setting_input_textarea('tving_series', 'TV', value=arg['tving_series'], row='20', desc=['category, max_count, frequency']) }}
+    {{ macros.m_tab_content_end() }}
+    {{ macros.m_tab_content_start('sstv', false) }}
+      {{ macros.setting_checkbox('sstv_use', '사용', value=arg['sstv_use'], desc=None) }}
+      {{ macros.setting_checkbox('sstv_only_kor', '한국만', value=arg['sstv_only_kor'], desc=['On : 한국만', 'Off : 모두']) }}
+      {{ macros.setting_checkbox('sstv_group_only_country', '그룹 - 나라만', value=arg['sstv_group_only_country'], desc=['On : 국가', 'Off : 국가 카테고리']) }}
     {{ macros.m_tab_content_end() }}
   </div><!--tab-content-->
 </form>

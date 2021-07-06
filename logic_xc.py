@@ -25,8 +25,9 @@ ModelSetting = P.ModelSetting
 from .process_plex import ProcessPlex, plex_default_vod, plex_default_series
 from .process_wavve import ProcessWavve, wavve_default_live, wavve_default_vod, wavve_default_series
 from .process_tving import ProcessTving, tving_default_live, tving_default_vod, tving_default_series
+from .process_sstv import ProcessSstv
 
-source_list = [ProcessPlex, ProcessWavve, ProcessTving]
+source_list = [ProcessPlex, ProcessWavve, ProcessTving, ProcessSstv]
 
 @P.blueprint.route('/get.php', methods=['GET'])
 def get_php():
@@ -59,6 +60,13 @@ def xmltv_php():
                 title_tag = ET.SubElement(program_tag, 'title')
                 title_tag.set('lang', 'ko')
                 title_tag.text = program['title']
+                if 'desc' in program:
+                    desc_tag = ET.SubElement(program_tag, 'desc')
+                    desc_tag.text = program['desc']
+                if 'icon' in program:
+                    icon_tag = ET.SubElement(program_tag, 'icon')
+                    icon_tag.set('src', program['icon'])
+
     return app.response_class(ET.tostring(root, pretty_print=True, xml_declaration=True, encoding="utf-8"), mimetype='application/xml')
    
 
@@ -182,7 +190,12 @@ class LogicXC(LogicModuleBase):
         'tving_live' : tving_default_live, 
         'tving_vod' : tving_default_vod, 
         'tving_series' : tving_default_series, 
+
+        'sstv_use' : 'True',
+        'sstv_only_kor' : 'True',
+        'sstv_group_only_country' : 'True',
     }
+
 
     def __init__(self, P):
         super(LogicXC, self).__init__(P, 'base', scheduler_desc=u'tivimate 항목 생성')
@@ -207,6 +220,7 @@ class LogicXC(LogicModuleBase):
                     ProcessPlex.scheduler_function(mode='force')
                     ProcessWavve.scheduler_function(mode='force')
                     ProcessTving.scheduler_function(mode='force')
+                    ProcessSstv.scheduler_function(mode='force')
                     socketio.emit("notify", data = {'type':'success', 'msg' : u'<strong>아이템 로딩 완료</strong>'}, namespace='/framework', broadcast=True)    
                 t = threading.Thread(target=func, args=())
                 t.daemon = True
@@ -235,6 +249,7 @@ class LogicXC(LogicModuleBase):
             ProcessPlex.scheduler_function(mode=mode)
             ProcessWavve.scheduler_function(mode=mode)
             ProcessTving.scheduler_function(mode=mode)
+            ProcessSstv.scheduler_function(mode=mode)
             logger.debug('scheduler_function end..')
         except Exception as e: 
             P.logger.error('Exception:%s', e)
