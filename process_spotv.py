@@ -57,7 +57,7 @@ class ProcessSpotv(ProcessBase):
                     "epg_channel_id" : item[1],
                     "added":"1492282762",
                     "is_adult":"0",
-                    "category_id":'14',
+                    "category_id":'1' + ProcessSpotv.unique,
                     "custom_sid":"",
                     "tv_archive":0,
                     "direct_source":"",
