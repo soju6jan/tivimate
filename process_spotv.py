@@ -42,7 +42,7 @@ class ProcessSpotv(ProcessBase):
 
     @classmethod
     def make_live_data(cls, mode):
-        cls.live_categories = [{'category_id' : '1' + ProcessSpotv.unique, 'category_name':'spotv', 'parent_id':0}]
+        cls.live_categories = [{'category_id' : '1' + ProcessSpotv.unique, 'category_name':'Spotv', 'parent_id':0}]
         cls.live_list = []
         cls.live_channel_list = OrderedDict()
         cls.data = cls.get_broad_list()
