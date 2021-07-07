@@ -26,8 +26,9 @@ from .process_plex import ProcessPlex, plex_default_vod, plex_default_series
 from .process_wavve import ProcessWavve, wavve_default_live, wavve_default_vod, wavve_default_series
 from .process_tving import ProcessTving, tving_default_live, tving_default_vod, tving_default_series
 from .process_sstv import ProcessSstv
+from .process_spotv import ProcessSpotv
 
-source_list = [ProcessPlex, ProcessWavve, ProcessTving, ProcessSstv]
+source_list = [ProcessPlex, ProcessWavve, ProcessTving, ProcessSstv, ProcessSpotv]
 
 @P.blueprint.route('/get.php', methods=['GET'])
 def get_php():
@@ -194,6 +195,12 @@ class LogicXC(LogicModuleBase):
         'sstv_use' : 'True',
         'sstv_only_kor' : 'True',
         'sstv_group_only_country' : 'True',
+    
+        'spotv_use' : 'False',
+        'spotv_pk' : '',
+        'spotv_username' : '',
+        'spotv_password' : '',
+        'spotv_quality' : '',
     }
 
 
@@ -217,10 +224,11 @@ class LogicXC(LogicModuleBase):
         try:
             if sub == 'all_load':
                 def func():
-                    ProcessPlex.scheduler_function(mode='force')
+                    ProcessSstv.scheduler_function(mode='force')
+                    ProcessSpotv.scheduler_function(mode='force')
                     ProcessWavve.scheduler_function(mode='force')
                     ProcessTving.scheduler_function(mode='force')
-                    ProcessSstv.scheduler_function(mode='force')
+                    ProcessPlex.scheduler_function(mode='force')
                     socketio.emit("notify", data = {'type':'success', 'msg' : u'<strong>아이템 로딩 완료</strong>'}, namespace='/framework', broadcast=True)    
                 t = threading.Thread(target=func, args=())
                 t.daemon = True
@@ -246,10 +254,11 @@ class LogicXC(LogicModuleBase):
     def scheduler_function(self):
         try:
             mode = 'force' if (P.scheduler_count % 50) == 0 else 'scheduler'
-            ProcessPlex.scheduler_function(mode=mode)
+            ProcessSstv.scheduler_function(mode=mode)
+            ProcessSpotv.scheduler_function(mode=mode)
             ProcessWavve.scheduler_function(mode=mode)
             ProcessTving.scheduler_function(mode=mode)
-            ProcessSstv.scheduler_function(mode=mode)
+            ProcessPlex.scheduler_function(mode=mode)
             logger.debug('scheduler_function end..')
         except Exception as e: 
             P.logger.error('Exception:%s', e)
