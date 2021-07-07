@@ -29,7 +29,7 @@ EPG_URL = 'https://i.mjh.nz/SamsungTVPlus/all.xml.gz'
 
 
 class ProcessSstv(ProcessBase):
-    unique = '3'
+    unique = '4'
     data = None
 
     @classmethod 

@@ -28,7 +28,7 @@ from .process_tving import ProcessTving, tving_default_live, tving_default_vod, 
 from .process_sstv import ProcessSstv
 from .process_spotv import ProcessSpotv
 
-source_list = [ProcessPlex, ProcessWavve, ProcessTving, ProcessSstv, ProcessSpotv]
+source_list = [ProcessPlex, ProcessWavve, ProcessTving, ProcessSpotv, ProcessSstv]
 
 @P.blueprint.route('/get.php', methods=['GET'])
 def get_php():

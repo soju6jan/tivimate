@@ -26,7 +26,7 @@ ModelSetting = P.ModelSetting
 
 
 class ProcessSpotv(ProcessBase):
-    unique = '4'
+    unique = '3'
     data = None
 
     @classmethod 
