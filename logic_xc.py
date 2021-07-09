@@ -3,10 +3,11 @@
 # python
 import os, sys, traceback, re, json, threading, time, shutil
 from datetime import datetime
+import urllib
 # third-party
 import requests
 # third-party
-from flask import request, render_template, jsonify, redirect
+from flask import request, render_template, jsonify, redirect, send_file
 from sqlalchemy import or_, and_, func, not_, desc
 import lxml.html
 from lxml import etree as ET
@@ -155,6 +156,23 @@ def series(path):
 @P.blueprint.route('/live/<path:path>')
 def live(path):
     return redirect_streaming_url('live', path)
+
+
+@P.blueprint.route('/img', methods=['GET', 'POST'])
+def img():
+    from PIL import Image
+    image_url = urllib.parse.unquote_plus(request.args.get('url'))
+    im = Image.open(requests.get(image_url, stream=True).raw)
+    width, height = im.size
+    new_height = height
+    new_width = int(height * 1.78)
+    #new_image = Image.new('RGBA',(new_width, new_height), (0,0,0, 0))
+    new_image = Image.new('RGBA',(new_width, new_height), (0,0,0,0))
+    new_image.paste(im, (int((new_width - width)/2), 0))
+    filename = os.path.join(path_data, 'tmp', f'proxy_{str(time.time())}.png')
+    new_image.save(filename)
+    #return send_file(filename, mimetype='image/jpeg')
+    return send_file(filename, mimetype='image/png')
 
 
 class LogicXC(LogicModuleBase):

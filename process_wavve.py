@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #########################################################
 # python
-import os, sys, traceback, re, json, threading, time, shutil
+import os, sys, traceback, re, json, threading, time, shutil, urllib
 from datetime import datetime, timedelta
 from collections import OrderedDict
 
@@ -13,6 +13,7 @@ from lxml import etree as ET
 # sjva 공용
 from framework import db, scheduler, path_data, socketio, SystemModelSetting
 from framework.util import Util
+from tool_base import d, ToolUtil
 
 # 패키지
 from .plugin import P
@@ -219,6 +220,7 @@ class ProcessWavve(ProcessBase):
             db_item = ModelWavveMap.get_by_xc_id(vod_id)
             content_id = db_item.wavve_id
             program_data = db_item.program_data
+            #logger.warning(d(program_data))
             ret = {
                 'info' : {
                     'plot' : program_data['synopsis'], 
@@ -227,6 +229,8 @@ class ProcessWavve(ProcessBase):
                     'genre' : ', '.join([x['text'] for x in program_data['genre']['list']]),
                     'releasedate' : program_data['releasedate'],
                     'duration_secs' : program_data['playtime'],
+                    'backdrop_path' : ToolUtil.make_apikey_url(f"/{package_name}/img?url={urllib.parse.quote('https://' + program_data['image'])}"),
+                    
                 },
                 'movie_data' : {
                     'name' : program_data['title'],
@@ -248,6 +252,7 @@ class ProcessWavve(ProcessBase):
             db_item = ModelWavveMap.get_by_xc_id(series_id)
             content_id = db_item.wavve_id
             program_data = db_item.program_data
+            #logger.warning(d(program_data))
             ret = {
                 'seasons':[
                     {
@@ -262,7 +267,8 @@ class ProcessWavve(ProcessBase):
                     'plot' : program_data['programsynopsis'].replace('<br>', '\n'), 
                     'cast' : ', '.join([x['text'] for x in program_data['programactors']['list']]),
                     'genre' : ', '.join([x['text'] for x in program_data['tags']['list']]) + '   ' + program_data['channelname'],
-                    'releasedate' : program_data['firstreleasedate'] 
+                    'releasedate' : program_data['firstreleasedate'],
+                    "backdrop_path" : 'https://' + program_data['image'],
                 },
                 'episodes': {'1' : []},
             }

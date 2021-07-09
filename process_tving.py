@@ -14,6 +14,7 @@ import requests
 # sjva 공용
 from framework import db, scheduler, path_data, socketio, SystemModelSetting, app
 from framework.util import Util
+from tool_base import d
 
 # 패키지
 from .plugin import P
@@ -140,6 +141,11 @@ class ProcessTving(ProcessBase):
                         name = vod['vod_name']['ko']
                         if vod['movie']['drm_yn'] == 'Y' and ModelSetting.get_bool('drm_notify'):
                             name += '(D)'
+                        #logger.warning(d(vod['movie']))
+                        #backdrop = ''
+                        #for img in vod['movie']['image']:
+                        #    if img['code'] in ['CAIM0400', 'CAIM0700']:
+                        #        backdrop = 'https://image.tving.com' + img['url']
 
                         entity = {
                             'name' : name,
@@ -149,6 +155,7 @@ class ProcessTving(ProcessBase):
                             'category_id' : category_id,
                             'is_adult' : '0',
                         }
+                        #CAIM0400 CAIM0700
                         cls.saved['vod'][category_id].append(entity)
                         category_count += 1
 
@@ -227,12 +234,18 @@ class ProcessTving(ProcessBase):
             db_item = ModelTvingMap.get_by_xc_id(vod_id)
             content_id = db_item.tving_id
             program_data = db_item.program_data
+            backdrop = ''
+            for img in program_data['content']['info']['movie']['image']:
+                if img['code'] in ['CAIM0400', 'CAIM0700']:
+                    backdrop = 'https://image.tving.com' + img['url']
+                    break
             ret = {
                 'info' : {
                     'plot' : program_data['content']['info']['movie']['story']['ko'], 
                     'cast' : ', '.join(program_data['content']['info']['movie']['actor']),
                     'director' : ', '.join(program_data['content']['info']['movie']['director']),
                     'duration_secs' : program_data['content']['info']['movie']['duration'],
+                    'backdrop_path' : backdrop,
                 },
                 'movie_data' : {
                     'name' : program_data['content']['info']['movie']['name']['ko'],
@@ -257,6 +270,12 @@ class ProcessTving(ProcessBase):
             db_item = ModelTvingMap.get_by_xc_id(series_id)
             content_id = db_item.tving_id
             program_data = db_item.program_data
+            logger.warning(d(program_data))
+            backdrop = ''
+            for img in program_data['image']:
+                if img['code'] in ['CAIP0400', 'CAIP0700']:
+                    backdrop = 'https://image.tving.com' + img['url']
+                    break
             ret = {
                 'seasons':[
                     {
@@ -271,7 +290,8 @@ class ProcessTving(ProcessBase):
                     'cast' : ', '.join(program_data['actor']),
                     'director' : ', '.join(program_data['director']),
                     'genre' : program_data['category1_name']['ko'] + ', ' + program_data['category2_name']['ko'],
-                    'releasedate' : program_data['broad_dt'] 
+                    'releasedate' : program_data['broad_dt'] ,
+                    'backdrop_path' : backdrop,
                 },
                 'episodes': {'1' : []},
             }
