@@ -136,7 +136,7 @@ def player_api_php():
 
 
 def redirect_streaming_url(content_type, path):
-    logger.debug('>> CONTENT : %s, PATH : %s, ags : %s', content_type, path, request.args)
+    #logger.debug('>> CONTENT : %s, PATH : %s, ags : %s', content_type, path, request.args)
     tmp = path.split('/')[-1].split('.')
     xc_id = tmp[0]
     url = source_list[int(xc_id)%10].get_streaming_url(xc_id, content_type, extension=tmp[1])
