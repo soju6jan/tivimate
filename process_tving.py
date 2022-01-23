@@ -194,7 +194,7 @@ class ProcessTving(ProcessBase):
                         break                  
                     for idx, episode in enumerate(episode_list['body']['result']):
                         id_type = 'series_%s' % item['category']
-                        xc_id = ModelTvingMap.get_xc_id(id_type, episode['program']['code'], is_drm=(episode['episode']['drm_yn'] == 'Y'))
+                        xc_id = ModelTvingMap.get_xc_id(id_type, episode['program']['code'], is_drm=('drm_yn' in episode['episode'] and episode['episode']['drm_yn'] == 'Y'))
                         if ModelSetting.get('drm_include') == False and episode['episode']['drm_yn'] == 'Y':
                             continue
                         if ModelSetting.get_bool('tving_is_adult') == False and episode['program']['adult_yn'] == 'Y':
@@ -205,7 +205,7 @@ class ProcessTving(ProcessBase):
                                 image_url = 'https://image.tving.com' + tmp['url']
                                 break
                         name = episode['program']['name']['ko']
-                        if episode['episode']['drm_yn'] == 'Y' and ModelSetting.get_bool('drm_notify'):
+                        if 'drm_yn' in episode['episode'] and episode['episode']['drm_yn'] == 'Y' and ModelSetting.get_bool('drm_notify'):
                             name += '(D)'
                         entity = {
                             'name' : name,
