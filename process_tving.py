@@ -190,7 +190,9 @@ class ProcessTving(ProcessBase):
                 page = 1
                 category_count = 0
                 while True:   
-                    episode_list = SupportTving.ins.get_vod_list(page=page, genre=item['category'])
+                    #logger.error(item['category'])
+                    #logger.error(page)
+                    episode_list = SupportTving.ins.get_vod_list_genre(genre=item['category'], page=page)
                     if episode_list is None or len(episode_list['result']) == 0:
                         break                  
                     for idx, episode in enumerate(episode_list['result']):
@@ -215,6 +217,7 @@ class ProcessTving(ProcessBase):
                             'category_id' : category_id,
                             'last_modified' : timestamp - count
                         }
+                        logger.warning(entity['name'])
                         cls.saved['series'][category_id].append(entity)
                         count += 1
                         category_count += 1
