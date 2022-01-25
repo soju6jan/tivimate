@@ -271,7 +271,7 @@ class ProcessTving(ProcessBase):
             db_item = ModelTvingMap.get_by_xc_id(series_id)
             content_id = db_item.tving_id
             program_data = db_item.program_data
-            logger.warning(d(program_data))
+            #logger.warning(d(program_data))
             backdrop = ''
             for img in program_data['image']:
                 if img['code'] in ['CAIP0400', 'CAIP0700']:
