@@ -31,7 +31,7 @@ def tving_live():
     quality = SupportTving.ins.get_quality_to_tving(ModelSetting.get('tving_quality'))
     c_id = request.args.get('channelid')
     data = SupportTving.ins.get_info(c_id, quality)
-    url = data['play_info']['url']
+    url = data['url']
     if data['drm'] == False:
         data = requests.get(url).text
         temp = url.split('playlist.m3u8')
@@ -338,12 +338,12 @@ class ProcessTving(ProcessBase):
             if extension == "mpd":
                 return data['play_info']
             else:
-                return data['play_info']['url']
+                return data['url']
         else:
             if extension == "mpd":
                 return data['play_info']
             else:
-                return data['play_info']['url']
+                return data['url']
 
 
     @classmethod
