@@ -32,7 +32,7 @@ def tving_live():
     c_id = request.args.get('channelid')
     data = SupportTving.ins.get_info(c_id, quality)
     url = data['play_info']['url']
-    if data['play_info']['drm'] == False:
+    if data['drm'] == False:
         data = requests.get(url).text
         temp = url.split('playlist.m3u8')
         rate = ['chunklist_b5128000.m3u8', 'chunklist_b1628000.m3u8', 'chunklist_b1228000.m3u8', 'chunklist_b1128000.m3u8', 'chunklist_b628000.m3u8', 'chunklist_b378000.m3u8', 'chunklist_b7692000.m3u8', 'chunklist_b3192000.m3u8', 'chunklist_b2442000.m3u8', 'chunklist_b1692000.m3u8', 'chunklist_b942000.m3u8', 'chunklist_b567000.m3u8', 'chunklist_b379500.m3u8']
