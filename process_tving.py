@@ -217,7 +217,7 @@ class ProcessTving(ProcessBase):
                             'category_id' : category_id,
                             'last_modified' : timestamp - count
                         }
-                        logger.warning(entity['name'])
+                        #logger.warning(entity['name'])
                         cls.saved['series'][category_id].append(entity)
                         count += 1
                         category_count += 1
