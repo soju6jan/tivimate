@@ -24,14 +24,15 @@ package_name = P.package_name
 ModelSetting = P.ModelSetting
 #########################################################
 
-import framework.tving.api as Tving
+from support.site.tving import SupportTving
 
 @P.blueprint.route('/tving_live.m3u8', methods=['GET'])
 def tving_live():
-    quality = Tving.get_quality_to_tving(ModelSetting.get('tving_quality'))
+    quality = SupportTving.ins.get_quality_to_tving(ModelSetting.get('tving_quality'))
     c_id = request.args.get('channelid')
-    data, url = Tving.get_episode_json(c_id, quality, is_live=True)
-    if data['body']['stream']['drm_yn'] == 'N':
+    data = SupportTving.ins.get_info(c_id, quality)
+    url = data['play_info']['url']
+    if data['play_info']['drm'] == False:
         data = requests.get(url).text
         temp = url.split('playlist.m3u8')
         rate = ['chunklist_b5128000.m3u8', 'chunklist_b1628000.m3u8', 'chunklist_b1228000.m3u8', 'chunklist_b1128000.m3u8', 'chunklist_b628000.m3u8', 'chunklist_b378000.m3u8', 'chunklist_b7692000.m3u8', 'chunklist_b3192000.m3u8', 'chunklist_b2442000.m3u8', 'chunklist_b1692000.m3u8', 'chunklist_b942000.m3u8', 'chunklist_b567000.m3u8', 'chunklist_b379500.m3u8']
@@ -75,7 +76,7 @@ class ProcessTving(ProcessBase):
                 else:
                     cls.saved['live'][category_id] = []
                     cls.saved['live_channel_list'] = OrderedDict()
-                live_list = Tving.get_live_list(list_type=item['category']) #, order='name')
+                live_list = SupportTving.ins.get_live_list(list_type=item['category']) #, order='name')
                 if live_list is None or len(live_list) == 0:
                     break
                 for live in live_list:
@@ -130,7 +131,7 @@ class ProcessTving(ProcessBase):
                 page = 1
                 category_count = 0
                 while True:
-                    vod_list = Tving.get_movies(page=page, category=item['category'])['body']
+                    vod_list = SupportTving.ins.get_movie_list(page=page, category=item['category'])
                     if vod_list is None or len(vod_list['result']) == 0:
                         break
                     id_type = 'vod_' + item['category']
@@ -189,10 +190,10 @@ class ProcessTving(ProcessBase):
                 page = 1
                 category_count = 0
                 while True:   
-                    episode_list = Tving.get_vod_list2(page=page, genre=item['category'])
-                    if episode_list is None or len(episode_list['body']['result']) == 0:
+                    episode_list = SupportTving.ins.get_vod_list(page=page, genre=item['category'])
+                    if episode_list is None or len(episode_list['result']) == 0:
                         break                  
-                    for idx, episode in enumerate(episode_list['body']['result']):
+                    for idx, episode in enumerate(episode_list['result']):
                         id_type = 'series_%s' % item['category']
                         xc_id = ModelTvingMap.get_xc_id(id_type, episode['program']['code'], is_drm=('drm_yn' in episode['episode'] and episode['episode']['drm_yn'] == 'Y'))
                         if ModelSetting.get('drm_include') == False and episode['episode']['drm_yn'] == 'Y':
@@ -297,7 +298,7 @@ class ProcessTving(ProcessBase):
             }
             page = 1
             index = 1
-            episode_data = Tving.get_frequency_programid(content_id, page=page)['body']
+            episode_data = SupportTving.ins.get_frequency_programid(content_id, page=page)
 
             ret['info']['genre'] += '   ' + episode_data['result'][0]['channel']['name']['ko']
             for episode in list(reversed(episode_data['result'])):
@@ -323,30 +324,23 @@ class ProcessTving(ProcessBase):
     def get_streaming_url(cls, xc_id, content_type, extension="m3u8"):
         db_item = ModelTvingMap.get_by_xc_id(xc_id)
         content_id = db_item.tving_id
+        data = SupportTving.ins.get_info(content_id, SupportTving.ins.get_quality_to_tving(ModelSetting.get('tving_quality')))
         if content_type == 'live':
             if db_item.is_drm:
-                #if extension == 'mpd':
-                data = Tving.get_stream_info_by_web('live', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))
                 return data['play_info']
-                #else:
-                #    ret = '/tivimate/live/a/a/%s.mpd' % xc_id
             else:
                 ret = '/tivimate/tving_live.m3u8?channelid=%s' % content_id
             return ret
         elif content_type == 'vod':
             if extension == "mpd":
-                data = Tving.get_stream_info_by_web('movie', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))
                 return data['play_info']
             else:
-                data, url = Tving.get_episode_json(content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))    
-                return url
+                return data['play_info']['url']
         else:
             if extension == "mpd":
-                data = Tving.get_stream_info_by_web('vod', content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))
-                return data['play_info'] 
+                return data['play_info']
             else:
-                data, url = Tving.get_episode_json(content_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))
-                return url
+                return data['play_info']['url']
 
 
     @classmethod
@@ -366,7 +360,7 @@ class ProcessTving(ProcessBase):
                         else:
                             keys = list(cls.live_channel_list.keys())
                         ch = keys[:20] if part == 0 else keys[20:]
-                        data = Tving.get_schedules(ch, date_param, start_time, end_time)['body']
+                        data = SupportTving.ins.get_schedules(ch, date_param, start_time, end_time)
                         for ch in data['result']:
                             if ch['schedules'] is not None:
                                 for schedule in ch['schedules']:
@@ -430,11 +424,11 @@ class ModelTvingMap(db.Model):
         xc_id = int(xc_id[:-1])
         ret = db.session.query(cls).filter_by(xc_id=xc_id).first()
         if ret.id_type.startswith('vod') and ret.program_data is None:
-            ret.program_data = Tving.get_movie_json2(ret.tving_id, quality= Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))['body']
+            ret.program_data = SupportTving.ins.get_info(ret.tving_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))
             db.session.add(ret)
             db.session.commit()
         if ret.id_type.startswith('series') and ret.program_data is None:
-            ret.program_data = Tving.get_program_programid(ret.tving_id)['body']
+            ret.program_data = SupportTving.ins.get_program_programid(ret.tving_id)
             db.session.add(ret)
             db.session.commit()
         return ret
