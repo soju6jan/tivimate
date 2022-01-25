@@ -332,7 +332,7 @@ class ProcessTving(ProcessBase):
             if db_item.is_drm:
                 return data['play_info']
             else:
-                ret = '/tivimate/tving_live.m3u8?channelid=%s' % content_id
+                ret = f"{SystemModelSetting.get('ddns')}/tivimate/tving_live.m3u8?channelid={content_id}"
             return ret
         elif content_type == 'vod':
             if extension == "mpd":
