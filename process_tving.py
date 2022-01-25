@@ -424,7 +424,7 @@ class ModelTvingMap(db.Model):
         xc_id = int(xc_id[:-1])
         ret = db.session.query(cls).filter_by(xc_id=xc_id).first()
         if ret.id_type.startswith('vod') and ret.program_data is None:
-            ret.program_data = SupportTving.ins.get_info(ret.tving_id, Tving.get_quality_to_tving(ModelSetting.get('tving_quality')))
+            ret.program_data = SupportTving.ins.get_info(ret.tving_id, SupportTving.ins.get_quality_to_tving(ModelSetting.get('tving_quality')))
             db.session.add(ret)
             db.session.commit()
         if ret.id_type.startswith('series') and ret.program_data is None:
