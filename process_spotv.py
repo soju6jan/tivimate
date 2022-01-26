@@ -73,13 +73,13 @@ class ProcessSpotv(ProcessBase):
 
     @classmethod
     def get_broad_list(cls):
-        fix_list = []
         session = requests.post('https://www.spotvnow.co.kr/api/v2/login', json={"username":ModelSetting.get('spotv_username'),"password":ModelSetting.get('spotv_password')}).cookies['SESSION']
+        broad_list = [[x['name'], x['hlsUrl']] for x in requests.get(f"https://www.spotvnow.co.kr/api/v2/channel", headers={'Cookie':f'SESSION={session}'}).json()]
         data = requests.get(f"https://www.spotvnow.co.kr/api/v2/player/lives/{datetime.now().strftime('%Y-%m-%d')}", headers={'Cookie':f'SESSION={session}'}).json()
         for league in data: 
             for game in league['liveNowList']:
-                fix_list.append([f"{league['name']} - {game['gameDesc']['title']}" if game['gameDesc']['title']  else f"{league['name']} - {game['gameDesc']['awayName']} vs {game['gameDesc']['homeName']}", requests.get(f"https://www.spotvnow.co.kr/api/v2/live/{game['liveId']}", headers={'Cookie':f'SESSION={session}'}).json()['videoId'].split(':')[1]])
-        return fix_list
+                broad_list.append([f"[{league['name']}] {game['gameDesc']['title']} ({game['startTime']}~)" if game['gameDesc']['title']  else f"[{league['name']}] {game['gameDesc']['awayName']} vs {game['gameDesc']['homeName']} ({game['startTime']}~)", requests.get(f"https://www.spotvnow.co.kr/api/v2/live/{game['liveId']}", headers={'Cookie':f'SESSION={session}'}).json()['hlsUrl2']])
+        return broad_list
    
 
     @classmethod 
