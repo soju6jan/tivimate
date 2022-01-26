@@ -46,6 +46,8 @@ class ProcessSpotv(ProcessBase):
         cls.live_list = []
         cls.live_channel_list = OrderedDict()
         cls.data = cls.get_broad_list()
+        from support.base import d
+        logger.debug(d(cls.data))
         for index, item in enumerate(cls.data):
             try:
                 entity = {
@@ -54,7 +56,7 @@ class ProcessSpotv(ProcessBase):
                     "stream_id":"live",
                     'stream_id' : str(index+1) + ProcessSpotv.unique,
                     'stream_icon' : '',
-                    "epg_channel_id" : item[1],
+                    "epg_channel_id" : str(index+1) + ProcessSpotv.unique,
                     "added":"1492282762",
                     "is_adult":"0",
                     "category_id":'1' + ProcessSpotv.unique,
@@ -87,7 +89,6 @@ class ProcessSpotv(ProcessBase):
         xc_id = int(xc_id[:-1]) - 1
         if cls.data is None:
             cls.data = cls.get_broad_list()
-        ch = cls.data[xc_id][1]
-        return requests.get(f"https://edge.api.brightcove.com/playback/v1/accounts/5764318566001/videos/ref%3A{ch}", headers={'Accept':f"application/json;pk={ModelSetting.get('spotv_pk')}"}).json()['sources'][0]['src']
+        return cls.data[xc_id][1]
 
 
