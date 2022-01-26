@@ -47,7 +47,7 @@ class ProcessSpotv(ProcessBase):
         cls.live_channel_list = OrderedDict()
         cls.data = cls.get_broad_list()
         from support.base import d
-        logger.debug(d(cls.data))
+        #logger.debug(d(cls.data))
         for index, item in enumerate(cls.data):
             try:
                 entity = {
